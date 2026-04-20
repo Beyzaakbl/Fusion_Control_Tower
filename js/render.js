@@ -220,11 +220,13 @@ function renderActionRow(a) {
           <span style="font-size:11px;color:var(--text3)">${a.owner||''}</span>
         </div>
       </div>
-      <button class="btn btn-sm" style="flex-shrink:0;color:var(--red-mid);border-color:transparent;background:transparent" 
-        onclick="deleteActionRow('${a.id}')">✕</button>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-sm" onclick="showEditActionModal('${a.id}')">✏️</button>
+        <button class="btn btn-sm" style="color:var(--red-mid);border-color:transparent;background:transparent" 
+          onclick="deleteActionRow('${a.id}')">✕</button>
+      </div>
     </div>`;
 }
-
 // ── TOGGLE FONKSİYONLARI ──
 function toggleProjectCard(id) {
   const body = document.getElementById('proj-body-' + id);
@@ -404,6 +406,79 @@ async function deleteActionRow(id) {
     toast('Aksiyon silindi');
     renderHierarchy();
     updateBadges();
+  }
+}
+function showEditActionModal(id) {
+  const a = actions.find(x => x.id === id);
+  if (!a) return;
+  showModal(`
+    <div class="modal-header">
+      <span class="modal-title">Aksiyonu Düzenle</span>
+      <span class="modal-close" onclick="closeModal()">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Aksiyon Başlığı *</label>
+        <input id="m-edit-title" class="form-input" value="${a.title}">
+      </div>
+      <div class="form-group"><label>Açıklama</label>
+        <textarea id="m-edit-desc" class="form-input" rows="2">${a.description||''}</textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Sorumlu</label>
+          <input id="m-edit-owner" class="form-input" value="${a.owner||''}">
+        </div>
+        <div class="form-group"><label>Öncelik</label>
+          <select id="m-edit-priority" class="form-input">
+            <option value="high" ${a.priority==='high'?'selected':''}>Yüksek</option>
+            <option value="medium" ${a.priority==='medium'?'selected':''}>Orta</option>
+            <option value="low" ${a.priority==='low'?'selected':''}>Düşük</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Başlangıç Tarihi</label>
+          <input id="m-edit-start" type="date" class="form-input" value="${a.start_date||''}">
+        </div>
+        <div class="form-group"><label>Bitiş / Termin</label>
+          <input id="m-edit-due" type="date" class="form-input" value="${a.due_date||''}">
+        </div>
+      </div>
+      <div class="form-group"><label>Durum</label>
+        <select id="m-edit-status" class="form-input">
+          <option value="open" ${a.status==='open'?'selected':''}>Açık</option>
+          <option value="late" ${a.status==='late'?'selected':''}>Gecikmiş</option>
+          <option value="done" ${a.status==='done'?'selected':''}>Tamamlandı</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="submitEditAction('${id}')">Kaydet</button>
+    </div>`);
+}
+
+async function submitEditAction(id) {
+  const title = document.getElementById('m-edit-title').value.trim();
+  if (!title) { toast('Aksiyon başlığı zorunlu', 'error'); return; }
+  const data = {
+    title,
+    description: document.getElementById('m-edit-desc').value,
+    owner: document.getElementById('m-edit-owner').value,
+    priority: document.getElementById('m-edit-priority').value,
+    start_date: document.getElementById('m-edit-start').value || null,
+    due_date: document.getElementById('m-edit-due').value || null,
+    status: document.getElementById('m-edit-status').value
+  };
+  const ok = await supabaseUpdate('actions', id, data);
+  if (ok) {
+    const a = actions.find(x => x.id === id);
+    if (a) Object.assign(a, data);
+    toast('Aksiyon güncellendi ✓');
+    closeModal();
+    renderHierarchy();
+    updateBadges();
+  } else {
+    toast('Güncelleme başarısız', 'error');
   }
 }
 
