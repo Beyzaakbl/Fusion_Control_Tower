@@ -15,10 +15,6 @@ function dot(r) {
 function renderDashboard() {
   // Metrikler
   const late = actions.filter(a => a.status === 'late');
-  const riskProj = projects.filter(p => p.rag === 'red' || p.rag === 'amber');
-  document.getElementById('metric-projects').textContent = projects.length;
-  document.getElementById('metric-packs').textContent = projects.reduce((s, p) => s + p.packs, 0);
-  document.getElementById('metric-late').textContent = late.length;
 
   // Proje listesi
   const pl = document.getElementById('proj-list');
