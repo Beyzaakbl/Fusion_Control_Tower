@@ -221,6 +221,7 @@ function renderActionRow(a) {
         <div class="action-title ${done?'done':''}">${a.title}</div>
         <div class="action-footer">
           ${a.priority ? priorityPill(a.priority) : ''}
+          ${statusPill(a.status)}
           <span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${a.due_date||''}</span>
           <span style="font-size:11px;color:var(--text3)">${a.owner||''}</span>
         </div>
