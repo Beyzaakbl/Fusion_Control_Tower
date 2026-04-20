@@ -20,12 +20,12 @@ async function loadAllData() {
     resources = res;
     showLoading(false);
     renderDashboard();
+    updateBadges();
   } catch (err) {
     console.error('Veri yüklenemedi:', err);
     showLoading(false);
   }
 }
-
 function showLoading(show) {
   let el = document.getElementById('loading-overlay');
   if (!el) {
