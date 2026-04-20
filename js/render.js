@@ -16,6 +16,11 @@ function priorityPill(p) {
   if (p === 'low') return '<span class="pill pill-gray">Düşük</span>';
   return '<span class="pill pill-amber">Orta</span>';
 }
+function statusPill(s) {
+  if (s === 'done') return '<span class="pill pill-green">Done</span>';
+  if (s === 'inprogress') return '<span class="pill pill-blue">In Progress</span>';
+  return '<span class="pill pill-gray">To Do</span>';
+}
 function toast(msg, type='success') {
   const el = document.createElement('div');
   el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:${type==='success'?'#3b6d11':'#a32d2d'};box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s`;
