@@ -214,7 +214,7 @@ function renderActionRow(a) {
   const done = a.status === 'done', late = a.status === 'late';
   return `
     <div class="action-row" id="action-row-${a.id}">
-      <div class="check-box ${done?'done':''}" onclick="toggleAction('${a.id}')">
+      <div class="check-box ${done?'done':''}">
         ${done?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 4.5l2 2 3-3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
       </div>
       <div class="action-body">
