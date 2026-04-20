@@ -1,23 +1,29 @@
-// Uygulama state'i
+// ── STATE ──
+let programs = [];
 let projects = [];
+let phases = [];
 let actions = [];
 let risks = [];
 let resources = [];
 
-// Tüm verileri Supabase'den çek
+// ── VERİ YÜKLE ──
 async function loadAllData() {
   try {
     showLoading(true);
-    const [p, a, r, res] = await Promise.all([
+    const [pg, pr, ph, ac, ri, re] = await Promise.all([
+      supabaseFetch('programs'),
       supabaseFetch('projects'),
+      supabaseFetch('phases'),
       supabaseFetch('actions'),
       supabaseFetch('risks'),
       supabaseFetch('resources')
     ]);
-    projects = p;
-    actions = a;
-    risks = r;
-    resources = res;
+    programs = pg;
+    projects = pr;
+    phases = ph;
+    actions = ac;
+    risks = ri;
+    resources = re;
     showLoading(false);
     renderDashboard();
     updateBadges();
@@ -26,23 +32,89 @@ async function loadAllData() {
     showLoading(false);
   }
 }
-function showLoading(show) {
-  let el = document.getElementById('loading-overlay');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'loading-overlay';
-    el.style.cssText = `
-      position:fixed;inset:0;background:rgba(255,255,255,.8);
-      display:flex;align-items:center;justify-content:center;
-      z-index:999;font-size:13px;color:#534ab7;font-weight:500;
-    `;
-    el.innerHTML = '⟳ Veriler yükleniyor...';
-    document.body.appendChild(el);
-  }
-  el.style.display = show ? 'flex' : 'none';
+
+// ── YARDIMCI FONKSİYONLAR ──
+function getProjectPhases(projectId) {
+  return phases.filter(p => p.project_id === projectId)
+               .sort((a, b) => a.order_num - b.order_num);
 }
 
-// Aksiyon durumunu güncelle (Supabase'e yaz)
+function getPhaseActions(phaseId) {
+  return actions.filter(a => a.phase_id === phaseId);
+}
+
+function getProjectActions(projectId) {
+  const phaseIds = getProjectPhases(projectId).map(p => p.id);
+  return actions.filter(a => phaseIds.includes(a.phase_id));
+}
+
+function getProjectRisks(projectId) {
+  return risks.filter(r => r.project_id === projectId);
+}
+
+function getLateActions() {
+  return actions.filter(a => a.status === 'late');
+}
+
+function getActionCount() {
+  return actions.length;
+}
+
+// ── CRUD FONKSİYONLARI ──
+async function createProject(data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/projects`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (result[0]) {
+    projects.push(result[0]);
+    updateBadges();
+  }
+  return result[0];
+}
+
+async function createPhase(data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/phases`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (result[0]) phases.push(result[0]);
+  return result[0];
+}
+
+async function createAction(data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/actions`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (result[0]) {
+    actions.push(result[0]);
+    updateBadges();
+  }
+  return result[0];
+}
+
 async function toggleAction(id) {
   const a = actions.find(x => x.id === id);
   if (!a) return;
@@ -51,10 +123,44 @@ async function toggleAction(id) {
   if (ok) {
     a.status = newStatus;
     renderActions();
+    updateBadges();
   }
 }
 
-// Roadmap verisi (statik kalabilir)
+async function deleteItem(table, id) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`
+    }
+  });
+  return res.ok;
+}
+
+// ── LOADING ──
+function showLoading(show) {
+  let el = document.getElementById('loading-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loading-overlay';
+    el.style.cssText = `
+      position:fixed;inset:0;background:rgba(255,255,255,.85);
+      display:flex;align-items:center;justify-content:center;
+      z-index:999;font-size:13px;color:var(--purple);font-weight:600;
+      flex-direction:column;gap:10px;
+    `;
+    el.innerHTML = `
+      <div style="width:32px;height:32px;border:3px solid var(--purple-bg);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite"></div>
+      <span>Veriler yükleniyor...</span>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    `;
+    document.body.appendChild(el);
+  }
+  el.style.display = show ? 'flex' : 'none';
+}
+
+// ── ROADMAP (statik) ──
 const roadmapData = [
   {title:"Phase 1 — Vizyon & Temel Altyapı", tf:"Nisan – Mayıs 2026", col:"var(--red)", items:[
     {n:1, t:"PLM Aracı Değerlendirme & Seçim", d:"YÜG sürecinin omurgası. RFI hazırla, 3 vendor demo.", tags:["YÜG","Altyapı","10g"]},
