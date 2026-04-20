@@ -449,11 +449,11 @@ function showEditActionModal(id) {
           <input id="m-edit-due" type="date" class="form-input" value="${a.due_date||''}">
         </div>
       </div>
-      <div class="form-group"><label>Durum</label>
+    <div class="form-group"><label>Durum</label>
         <select id="m-edit-status" class="form-input">
-          <option value="open" ${a.status==='open'?'selected':''}>Açık</option>
-          <option value="late" ${a.status==='late'?'selected':''}>Gecikmiş</option>
-          <option value="done" ${a.status==='done'?'selected':''}>Tamamlandı</option>
+          <option value="todo" ${a.status==='todo'?'selected':''}>To Do</option>
+          <option value="inprogress" ${a.status==='inprogress'?'selected':''}>In Progress</option>
+          <option value="done" ${a.status==='done'?'selected':''}>Done</option>
         </select>
       </div>
     </div>
