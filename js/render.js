@@ -31,7 +31,7 @@ function toast(msg, type='success') {
 
 // ── BADGES ──
 function updateBadges() {
-  const late = actions.filter(a => a.status === 'late');
+  const late = getLateActions();
   const el = id => document.getElementById(id);
   if (el('badge-projects')) el('badge-projects').textContent = projects.length;
   if (el('badge-actions')) el('badge-actions').textContent = late.length;
