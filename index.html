@@ -4,275 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fusion Control Tower</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f5f4f0;--surface:#fff;--surface2:#f1efe8;--border:#e4e2da;--border2:#cccac0;
-  --text:#1a1a18;--text2:#5f5e5a;--text3:#97958e;
-  --blue:#185fa5;--blue-bg:#e6f1fb;--blue-mid:#378add;
-  --green:#3b6d11;--green-bg:#eaf3de;--green-mid:#639922;
-  --amber:#854f0b;--amber-bg:#faeeda;--amber-mid:#ba7517;
-  --red:#a32d2d;--red-bg:#fcebeb;--red-mid:#e24b4a;
-  --purple:#534ab7;--purple-bg:#eeedfe;--purple-mid:#7f77dd;--purple-dark:#3c3489;
-  --teal:#0f6e56;--teal-bg:#e1f5ee;
-  --r:8px;--rl:12px;--rxl:16px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
-
-/* ── LAYOUT ── */
-.app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:56px;background:var(--purple-dark);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:2px;flex-shrink:0;transition:width .22s ease}
-.sidebar.expanded{width:220px;align-items:flex-start;padding:12px 0}
-.sidebar-logo{width:36px;height:36px;border-radius:10px;background:var(--purple-mid);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;margin:0 auto 10px}
-.sidebar.expanded .sidebar-logo{margin:4px 12px 12px}
-.nav-group{width:100%;padding:0 6px}
-.sidebar.expanded .nav-group{padding:0 8px}
-.nav-label{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:0.8px;padding:10px 8px 4px;display:none}
-.sidebar.expanded .nav-label{display:block}
-.nav-item{width:44px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.55);transition:all .15s;position:relative;flex-shrink:0}
-.sidebar.expanded .nav-item{width:100%;justify-content:flex-start;gap:9px;padding:0 10px;height:36px}
-.nav-item:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
-.nav-item.active{background:rgba(255,255,255,.15);color:#fff}
-.nav-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--purple-mid)}
-.sidebar.expanded .nav-item.active::before{left:-8px}
-.nav-icon{width:18px;height:18px;flex-shrink:0;opacity:.8}
-.nav-item.active .nav-icon{opacity:1}
-.nav-text{font-size:12px;font-weight:500;white-space:nowrap;display:none}
-.sidebar.expanded .nav-text{display:block}
-.nav-badge{background:var(--red-mid);color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-left:auto;padding:0 4px}
-.sidebar-toggle{width:36px;height:36px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.4);margin-top:auto;transition:color .15s}
-.sidebar-toggle:hover{color:rgba(255,255,255,.8)}
-.sidebar.expanded .sidebar-toggle{margin:4px 8px 0;width:calc(100% - 16px)}
-
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-
-/* ── TOPBAR ── */
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0}
-.topbar-breadcrumb{display:flex;align-items:center;gap:6px;flex:1}
-.bc-item{font-size:12px;color:var(--text3);cursor:pointer}
-.bc-item:hover{color:var(--text)}
-.bc-sep{color:var(--text3);font-size:11px}
-.bc-current{font-size:14px;font-weight:500;color:var(--text)}
-.topbar-actions{display:flex;align-items:center;gap:6px}
-.avatar-sm{width:30px;height:30px;border-radius:50%;background:var(--purple-bg);color:var(--purple);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid var(--purple-mid)}
-
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;font-weight:500}
-.btn:hover{background:var(--surface2);border-color:var(--border2)}
-.btn:active{transform:scale(.98)}
-.btn-primary{background:var(--purple);color:#fff;border-color:var(--purple)}
-.btn-primary:hover{background:var(--purple-dark);border-color:var(--purple-dark)}
-.btn-ghost{border-color:transparent;background:transparent}
-.btn-ghost:hover{background:var(--surface2);border-color:var(--border)}
-.btn-sm{padding:4px 9px;font-size:11px}
-.btn-icon{width:32px;height:32px;padding:0;justify-content:center}
-
-/* ── CONTENT ── */
-.content{flex:1;overflow-y:auto;padding:20px}
-.page{display:none}
-.page.active{display:block}
-
-/* ── ACTION BAR ── */
-.action-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.action-bar-left{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
-.search-input{flex:1;max-width:280px;padding:7px 10px 7px 32px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;position:relative}
-.search-wrap{position:relative;flex:1;max-width:280px}
-.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
-.search-wrap input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border .15s}
-.search-wrap input:focus{border-color:var(--purple)}
-.filter-chips{display:flex;gap:4px;flex-wrap:wrap}
-.chip{padding:4px 10px;border-radius:20px;border:1px solid var(--border2);font-size:11px;cursor:pointer;background:var(--surface);color:var(--text2);transition:all .15s;font-weight:500}
-.chip:hover{border-color:var(--purple);color:var(--purple)}
-.chip.active{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
-
-/* ── METRICS ROW ── */
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
-.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;box-shadow:var(--shadow);transition:box-shadow .15s}
-.metric-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.metric-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.metric-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.4px}
-.metric-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center}
-.metric-value{font-size:28px;font-weight:600;line-height:1;margin-bottom:4px}
-.metric-sub{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
-.metric-trend{font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px}
-.trend-up{background:var(--red-bg);color:var(--red)}
-.trend-ok{background:var(--green-bg);color:var(--green)}
-
-/* ── CARDS ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--shadow)}
-.card-body{padding:16px}
-.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
-.card-title{font-size:13px;font-weight:600;color:var(--text)}
-.card-action{font-size:11px;color:var(--blue);cursor:pointer;font-weight:500}
-.card-action:hover{text-decoration:underline}
-
-/* ── GRID LAYOUTS ── */
-.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.grid-7-5{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:12px}
-.grid-6-4{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,4fr);gap:12px}
-
-/* ── STATUS PILLS ── */
-.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
-.pill::before{content:'';width:5px;height:5px;border-radius:50%}
-.pill-green{background:var(--green-bg);color:var(--green)}
-.pill-green::before{background:var(--green-mid)}
-.pill-amber{background:var(--amber-bg);color:var(--amber)}
-.pill-amber::before{background:var(--amber-mid)}
-.pill-red{background:var(--red-bg);color:var(--red)}
-.pill-red::before{background:var(--red-mid)}
-.pill-blue{background:var(--blue-bg);color:var(--blue)}
-.pill-blue::before{background:var(--blue-mid)}
-.pill-purple{background:var(--purple-bg);color:var(--purple)}
-.pill-purple::before{background:var(--purple-mid)}
-.pill-teal{background:var(--teal-bg);color:var(--teal)}
-.pill-teal::before{background:var(--teal)}
-.pill-gray{background:var(--surface2);color:var(--text2)}
-.pill-gray::before{background:var(--border2)}
-.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;background:var(--surface2);color:var(--text2);font-weight:500}
-
-/* ── TABLE ── */
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;table-layout:fixed}
-th{font-size:10px;font-weight:600;color:var(--text3);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.4px;background:var(--surface2)}
-td{font-size:12px;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
-tbody tr:last-child td{border-bottom:none}
-tbody tr{transition:background .1s;cursor:default}
-tbody tr:hover td{background:var(--bg)}
-.td-clip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.td-wrap{white-space:normal;line-height:1.4}
-
-/* ── AI INSIGHT BLOCK ── */
-.ai-block{border-left:3px solid var(--purple-mid);background:var(--purple-bg);border-radius:0 var(--r) var(--r) 0;padding:11px 14px;margin-bottom:14px}
-.ai-block-label{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;margin-bottom:5px}
-.ai-block-text{font-size:12px;color:var(--text);line-height:1.6}
-.ai-block-text strong{color:var(--purple);font-weight:600}
-
-/* ── URGENCY BANNER ── */
-.urgency-bar{display:flex;align-items:center;gap:10px;background:var(--red-bg);border:1px solid var(--red-mid);border-radius:var(--r);padding:9px 14px;margin-bottom:14px}
-.urgency-bar svg{flex-shrink:0;color:var(--red)}
-.urgency-bar-text{font-size:12px;color:var(--red);font-weight:500;flex:1}
-.urgency-bar .btn{flex-shrink:0}
-
-/* ── PROJECT LIST ITEM ── */
-.proj-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer}
-.proj-item:last-child{border-bottom:none}
-.proj-item:hover{background:var(--bg)}
-.proj-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.proj-info{flex:1;min-width:0}
-.proj-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.proj-meta{font-size:11px;color:var(--text3);margin-top:1px}
-.proj-packs{text-align:center;min-width:48px}
-.proj-packs-num{font-size:16px;font-weight:600;color:var(--amber)}
-.proj-packs-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.3px}
-
-/* ── ACTION ITEM ── */
-.action-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background .1s}
-.action-item:last-child{border-bottom:none}
-.action-item:hover{background:var(--bg)}
-.check-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.check-box:hover{border-color:var(--green)}
-.check-box.done{background:var(--green);border-color:var(--green)}
-.action-body{flex:1;min-width:0}
-.action-title{font-size:12px;font-weight:500;line-height:1.4}
-.action-title.done{text-decoration:line-through;color:var(--text3)}
-.action-footer{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
-.action-due{font-size:11px}
-.action-due.late{color:var(--red);font-weight:600}
-.action-due.ok{color:var(--text3)}
-
-/* ── WORKSHOP CARD ── */
-.ws-card{padding:16px;border-bottom:1px solid var(--border)}
-.ws-card:last-child{border-bottom:none}
-.ws-card-top{display:flex;align-items:flex-start;gap:12px}
-.ws-date-block{width:42px;text-align:center;flex-shrink:0}
-.ws-day{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase}
-.ws-num{font-size:22px;font-weight:700;line-height:1;color:var(--text)}
-.ws-mon{font-size:10px;color:var(--text3)}
-.ws-info{flex:1;min-width:0}
-.ws-title{font-size:13px;font-weight:600}
-.ws-sub{font-size:11px;color:var(--text3);margin-top:2px}
-.ws-insights{background:var(--surface2);border-radius:var(--r);padding:10px 12px;margin-top:10px}
-.ws-insight{font-size:11px;line-height:1.7;color:var(--text2);display:flex;gap:7px;align-items:flex-start;padding:1px 0}
-.ws-insight-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px}
-
-/* ── PROGRESS BAR ── */
-.progress{height:4px;border-radius:2px;background:var(--border);overflow:hidden;margin-top:5px}
-.progress-fill{height:100%;border-radius:2px;transition:width .3s}
-
-/* ── RESOURCE ROW ── */
-.res-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
-.res-row:last-child{border-bottom:none}
-.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
-.cap-track{flex:1;height:5px;border-radius:3px;background:var(--surface2);overflow:hidden}
-.cap-fill{height:100%;border-radius:3px;transition:width .4s}
-
-/* ── ROADMAP ── */
-.phase-card{border:1px solid var(--border);border-radius:var(--rl);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
-.phase-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;transition:background .15s}
-.phase-header:hover{background:var(--bg)}
-.phase-stripe{width:4px;height:36px;border-radius:2px;flex-shrink:0}
-.phase-meta{flex:1}
-.phase-title{font-size:13px;font-weight:600}
-.phase-timeframe{font-size:11px;color:var(--text3);margin-top:1px}
-.phase-count{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px}
-.phase-chevron{color:var(--text3);transition:transform .2s;font-size:12px}
-.phase-chevron.open{transform:rotate(180deg)}
-.phase-body{border-top:1px solid var(--border)}
-.roadmap-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
-.roadmap-item:last-child{border-bottom:none}
-.rmap-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
-.rmap-body{flex:1;min-width:0}
-.rmap-title{font-size:12px;font-weight:600}
-.rmap-desc{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5}
-.rmap-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
-
-/* ── EMPTY STATE ── */
-.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
-.empty-icon{font-size:32px;margin-bottom:10px}
-.empty-title{font-size:14px;font-weight:500;color:var(--text2);margin-bottom:6px}
-.empty-text{font-size:12px;line-height:1.6;max-width:260px;margin:0 auto 14px}
-
-/* ── TABS ── */
-.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:14px;gap:0}
-.tab{padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500;transition:all .15s}
-.tab:hover{color:var(--text2)}
-.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
-
-/* ── TOOLTIP HINT ── */
-.hint{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:4px 8px;cursor:default}
-
-/* ── DIVIDER ── */
-.divider{height:1px;background:var(--border);margin:12px 0}
-
-/* ── UPLOAD ZONE ── */
-.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:14px}
-.upload-zone:hover{border-color:var(--purple);background:var(--purple-bg)}
-.upload-zone-icon{font-size:24px;color:var(--text3);margin-bottom:6px}
-.upload-zone-text{font-size:13px;font-weight:500;color:var(--text2)}
-.upload-zone-sub{font-size:11px;color:var(--text3);margin-top:3px}
-
-/* ── NOTIF DOT ── */
-.notif-dot{width:6px;height:6px;border-radius:50%;background:var(--red-mid);position:absolute;top:6px;right:6px}
-
-/* ── BRIEFING ── */
-.brief-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-.brief-kpi{background:var(--surface2);border-radius:var(--r);padding:10px 12px;text-align:center}
-.brief-kpi-val{font-size:22px;font-weight:700;line-height:1}
-.brief-kpi-label{font-size:10px;color:var(--text3);margin-top:3px;font-weight:500}
-.eskalasyon{border-left:3px solid var(--red-mid);background:var(--red-bg);border-radius:0 var(--r) var(--r) 0;padding:10px 13px;margin-bottom:8px;font-size:12px;color:var(--red)}
-.eskalasyon-amber{border-left-color:var(--amber-mid);background:var(--amber-bg);color:var(--amber)}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  .sidebar{width:0;overflow:hidden}
-  .sidebar.mobile-open{width:220px;position:fixed;z-index:100;height:100vh}
-  .metrics{grid-template-columns:repeat(2,1fr)}
-  .grid-7-5,.grid-6-4,.grid-2,.grid-3{grid-template-columns:1fr}
-  .brief-kpis{grid-template-columns:repeat(2,1fr)}
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="app">
@@ -280,7 +12,6 @@ tbody tr:hover td{background:var(--bg)}
 <!-- ── SIDEBAR ── -->
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-logo" onclick="toggleSidebar()">F</div>
-
   <div class="nav-group">
     <div class="nav-label">Genel</div>
     <div class="nav-item active" onclick="navigate('dashboard',this)" title="Dashboard">
@@ -292,13 +23,12 @@ tbody tr:hover td{background:var(--bg)}
       <span class="nav-text">IT Roadmap</span>
     </div>
   </div>
-
   <div class="nav-group">
     <div class="nav-label">Projeler</div>
     <div class="nav-item" onclick="navigate('projects',this)" title="Tüm Projeler">
       <svg class="nav-icon" viewBox="0 0 18 18" fill="none"><rect x="1" y="3" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 7h8M5 10.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
       <span class="nav-text">Tüm Projeler</span>
-      <span class="nav-badge">11</span>
+      <span class="nav-badge" id="badge-projects">—</span>
     </div>
     <div class="nav-item" onclick="navigate('yug',this)" title="YÜG">
       <svg class="nav-icon" viewBox="0 0 18 18" fill="none"><path d="M9 2L9 9M9 9L6 6M9 9L12 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -309,7 +39,6 @@ tbody tr:hover td{background:var(--bg)}
       <span class="nav-text">P2P Satınalma</span>
     </div>
   </div>
-
   <div class="nav-group">
     <div class="nav-label">Operasyon</div>
     <div class="nav-item" onclick="navigate('workshops',this)" title="Çalıştaylar">
@@ -320,7 +49,7 @@ tbody tr:hover td{background:var(--bg)}
     <div class="nav-item" onclick="navigate('actions',this)" title="IT Aksiyonları">
       <svg class="nav-icon" viewBox="0 0 18 18" fill="none"><path d="M3 5l2.5 2.5L10 3M3 12l2.5 2.5L10 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 6h2M13 13h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
       <span class="nav-text">IT Aksiyonları</span>
-      <span class="nav-badge">3</span>
+      <span class="nav-badge" id="badge-actions">—</span>
     </div>
     <div class="nav-item" onclick="navigate('resources',this)" title="Kaynaklar">
       <svg class="nav-icon" viewBox="0 0 18 18" fill="none"><circle cx="6" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M1 16c0-3 2-5 5-5h0c3 0 5 2 5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 8l2 2 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -331,7 +60,6 @@ tbody tr:hover td{background:var(--bg)}
       <span class="nav-text">Dokümanlar</span>
     </div>
   </div>
-
   <div class="nav-group" style="margin-top:auto">
     <div class="nav-label">Raporlar</div>
     <div class="nav-item" onclick="navigate('briefing',this)" title="Yönetim Brifing">
@@ -343,8 +71,7 @@ tbody tr:hover td{background:var(--bg)}
       <span class="nav-text">Risk Kaydı</span>
     </div>
   </div>
-
-  <div class="sidebar-toggle" onclick="toggleSidebar()" title="Menüyü Genişlet/Daralt">
+  <div class="sidebar-toggle" onclick="toggleSidebar()">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
 </nav>
@@ -362,10 +89,7 @@ tbody tr:hover td{background:var(--bg)}
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="5" stroke="currentColor" stroke-width="1"/><path d="M5.5 4v2.5M5.5 7.5v.3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
         Hafta 16 · Nisan 2026
       </span>
-      <button class="btn btn-ghost btn-sm" onclick="teamsSync()">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M6 3v3l2 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-        Teams Notu Aktar
-      </button>
+      <button class="btn btn-ghost btn-sm" onclick="teamsSync()">Teams Notu Aktar</button>
       <button class="btn btn-primary btn-sm" onclick="aiAction()">+ AI Özet Üret</button>
       <div class="avatar-sm" title="IT Admin">IA</div>
     </div>
@@ -375,74 +99,46 @@ tbody tr:hover td{background:var(--bg)}
 
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page active">
-      <div class="urgency-bar">
+      <div class="urgency-bar" id="urgency-bar">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L13 12H1L7 1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 5.5v3M7 9.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span class="urgency-bar-text"><strong>3 gecikmiş IT aksiyonu</strong> — PLM demo, CLM RFI ve EBA-SAP entegrasyon haritası bu hafta teslim edilmeli.</span>
+        <span class="urgency-bar-text"><strong id="urgency-count">—</strong> gecikmiş IT aksiyonu bu hafta teslim edilmeli.</span>
         <button class="btn btn-sm" onclick="navigate('actions',null)" style="color:var(--red);border-color:var(--red);background:transparent">Aksiyonlara Git →</button>
       </div>
-
       <div class="metrics">
         <div class="metric-card">
-          <div class="metric-header">
-            <span class="metric-label">Aktif Proje</span>
-            <div class="metric-icon" style="background:var(--purple-bg)">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="#534ab7" stroke-width="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="#534ab7" stroke-width="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="#534ab7" stroke-width="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="#534ab7" stroke-width="1.3"/></svg>
-            </div>
-          </div>
-          <div class="metric-value" style="color:var(--purple)">11</div>
-          <div class="metric-sub"><span style="color:var(--green);font-weight:600">9 yolunda</span>&nbsp;· 2 riskli</div>
+          <div class="metric-header"><span class="metric-label">Aktif Proje</span></div>
+          <div class="metric-value" id="metric-projects" style="color:var(--purple)">—</div>
+          <div class="metric-sub" id="metric-projects-sub">yükleniyor...</div>
         </div>
         <div class="metric-card">
-          <div class="metric-header">
-            <span class="metric-label">IT İş Paketi</span>
-            <span class="metric-trend trend-up">3 geç</span>
-          </div>
-          <div class="metric-value" style="color:var(--amber)">12</div>
-          <div class="metric-sub">4 yeni çalıştaydan geldi</div>
+          <div class="metric-header"><span class="metric-label">IT İş Paketi</span><span class="metric-trend trend-up" id="metric-late-badge">—</span></div>
+          <div class="metric-value" id="metric-packs" style="color:var(--amber)">—</div>
+          <div class="metric-sub">çalıştaylardan geldi</div>
         </div>
         <div class="metric-card">
-          <div class="metric-header">
-            <span class="metric-label">Bu Hafta Çalıştay</span>
-            <div class="metric-icon" style="background:var(--blue-bg)">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="11" rx="1.5" stroke="#185fa5" stroke-width="1.3"/><path d="M4 2V1M10 2V1M1 5h12" stroke="#185fa5" stroke-width="1.3" stroke-linecap="round"/></svg>
-            </div>
-          </div>
+          <div class="metric-header"><span class="metric-label">Bu Hafta Çalıştay</span></div>
           <div class="metric-value" style="color:var(--blue)">3</div>
           <div class="metric-sub">2 AI özet bekliyor</div>
         </div>
         <div class="metric-card">
-          <div class="metric-header">
-            <span class="metric-label">IT Kapasite</span>
-            <span class="metric-trend trend-up">2 kritik</span>
-          </div>
-          <div class="metric-value" style="color:var(--teal)">78%</div>
-          <div class="metric-sub">Can D. & Deniz Ş. aşırı yüklü</div>
+          <div class="metric-header"><span class="metric-label">IT Kapasite</span></div>
+          <div class="metric-value" id="metric-load" style="color:var(--teal)">—</div>
+          <div class="metric-sub" id="metric-load-sub">yükleniyor...</div>
         </div>
       </div>
-
       <div class="grid-7-5" style="margin-bottom:12px">
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">Proje Durumu — Fusion Roadmap</span>
-            <span class="card-action" onclick="navigate('projects',null)">Tümünü gör →</span>
-          </div>
+          <div class="card-header"><span class="card-title">Proje Durumu</span><span class="card-action" onclick="navigate('projects',null)">Tümünü gör →</span></div>
           <div id="proj-list"></div>
         </div>
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">Gecikmiş IT Aksiyonları</span>
-            <span class="card-action" onclick="navigate('actions',null)">Tümü →</span>
-          </div>
+          <div class="card-header"><span class="card-title">Gecikmiş IT Aksiyonları</span><span class="card-action" onclick="navigate('actions',null)">Tümü →</span></div>
           <div id="action-mini"></div>
         </div>
       </div>
-
       <div class="grid-6-4">
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">Çalıştay AI Özetleri</span>
-            <span class="pill pill-purple">AI Aktif</span>
-          </div>
+          <div class="card-header"><span class="card-title">Çalıştay AI Özetleri</span><span class="pill pill-purple">AI Aktif</span></div>
           <div id="ws-mini"></div>
         </div>
         <div class="card">
@@ -455,11 +151,8 @@ tbody tr:hover td{background:var(--bg)}
     <!-- ROADMAP -->
     <div id="page-roadmap" class="page">
       <div class="ai-block" style="margin-bottom:16px">
-        <div class="ai-block-label">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#534ab7" stroke-width="1"/><path d="M5 2.5v3L7 7" stroke="#534ab7" stroke-width="1" stroke-linecap="round"/></svg>
-          AI Kaynaklı Roadmap — YÜG + P2P Çalıştay Dokümanlarından Üretildi
-        </div>
-        <div class="ai-block-text"><strong>14 IT iş paketi</strong> 3 faza dağıtıldı. <strong>Phase 1</strong> (Mayıs 2026 sonu) birinci gate için ön koşul. SAP BP/FM ve PLM seçimi bloke edici maddelerdir.</div>
+        <div class="ai-block-label">AI Kaynaklı Roadmap</div>
+        <div class="ai-block-text"><strong>14 IT iş paketi</strong> 3 faza dağıtıldı. SAP BP/FM ve PLM seçimi bloke edici maddelerdir.</div>
       </div>
       <div id="roadmap-body"></div>
     </div>
@@ -470,10 +163,10 @@ tbody tr:hover td{background:var(--bg)}
         <div class="action-bar-left">
           <div class="search-wrap">
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M9 9l3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-            <input type="text" placeholder="Proje ara..." oninput="filterProjs(this.value)">
+            <input type="text" placeholder="Proje ara...">
           </div>
           <div class="filter-chips">
-            <div class="chip active" onclick="projFilter('all',this)">Tümü (11)</div>
+            <div class="chip active" onclick="projFilter('all',this)">Tümü</div>
             <div class="chip" onclick="projFilter('green',this)">Yolunda</div>
             <div class="chip" onclick="projFilter('amber',this)">Dikkat</div>
             <div class="chip" onclick="projFilter('red',this)">Kritik</div>
@@ -484,13 +177,9 @@ tbody tr:hover td{background:var(--bg)}
         <div class="tbl-wrap">
           <table>
             <thead><tr>
-              <th style="width:28px"></th>
-              <th>Proje</th>
-              <th style="width:90px">İş Birimi</th>
-              <th style="width:80px">Faz</th>
-              <th style="width:60px">IT Paketi</th>
-              <th style="width:90px">Son Çalıştay</th>
-              <th style="width:80px">Durum</th>
+              <th style="width:28px"></th><th>Proje</th><th style="width:90px">İş Birimi</th>
+              <th style="width:80px">Faz</th><th style="width:60px">IT Paketi</th>
+              <th style="width:110px">Son Çalıştay</th><th style="width:80px">Durum</th>
             </tr></thead>
             <tbody id="all-proj-table"></tbody>
           </table>
@@ -507,62 +196,48 @@ tbody tr:hover td{background:var(--bg)}
       </div>
       <div id="yug-overview">
         <div class="ai-block"><div class="ai-block-label">AI Özet — YÜG Vizyon Çalıştayı · Nisan 2026</div>
-        <div class="ai-block-text"><strong>Kritik:</strong> PLM + DAM + Vibecoding governance. <strong>15 AI Agent</strong> tanımlandı (Trend, Insight, Formulation, Regulatory vb.) — fizibilite bekliyor. A/B/C/X proje sınıflandırması ve 4 gate kriterleri onaylandı.</div></div>
+        <div class="ai-block-text"><strong>Kritik:</strong> PLM + DAM + Vibecoding governance. <strong>15 AI Agent</strong> tanımlandı — fizibilite bekliyor.</div></div>
         <div class="grid-3" style="margin-bottom:12px">
           <div class="card card-body" style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--purple)">7</div><div style="font-size:11px;color:var(--text3);margin-top:2px">IT İş Paketi</div></div>
           <div class="card card-body" style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--red)">3</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Kritik Karar Bekliyor</div></div>
           <div class="card card-body" style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--amber)">15</div><div style="font-size:11px;color:var(--text3);margin-top:2px">AI Agent Planlandı</div></div>
         </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">IT'ye Düşen Kritik Kararlar</span></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr><th>Karar</th><th style="width:90px">Öncelik</th><th style="width:80px">Deadline</th></tr></thead>
-            <tbody>
-              <tr><td class="td-wrap">PLM aracı seçimi ve entegrasyon fizibilite analizi</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
-              <tr><td class="td-wrap">Vibecoding güvenlik & governance çerçevesi</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
-              <tr><td class="td-wrap">Fikir Yönetim Platformu (vibecoding veya SaaS?)</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
-              <tr><td class="td-wrap">Digital Asset Management (DAM) gereksinim analizi</td><td><span class="pill pill-amber">Yüksek</span></td><td style="color:var(--text3);font-size:11px">Haz 2026</td></tr>
-              <tr><td class="td-wrap">15 AI Agent teknik fizibilite ve maliyet raporu</td><td><span class="pill pill-blue">Orta</span></td><td style="color:var(--text3);font-size:11px">Tem 2026</td></tr>
-            </tbody>
-          </table></div>
-        </div>
+        <div class="card"><div class="card-header"><span class="card-title">IT'ye Düşen Kritik Kararlar</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Karar</th><th style="width:90px">Öncelik</th><th style="width:80px">Deadline</th></tr></thead>
+        <tbody>
+          <tr><td class="td-wrap">PLM aracı seçimi ve entegrasyon fizibilite analizi</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
+          <tr><td class="td-wrap">Vibecoding güvenlik & governance çerçevesi</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
+          <tr><td class="td-wrap">Fikir Yönetim Platformu (vibecoding veya SaaS?)</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
+          <tr><td class="td-wrap">Digital Asset Management (DAM) gereksinim analizi</td><td><span class="pill pill-amber">Yüksek</span></td><td style="color:var(--text3);font-size:11px">Haz 2026</td></tr>
+          <tr><td class="td-wrap">15 AI Agent teknik fizibilite ve maliyet raporu</td><td><span class="pill pill-blue">Orta</span></td><td style="color:var(--text3);font-size:11px">Tem 2026</td></tr>
+        </tbody></table></div></div>
       </div>
       <div id="yug-ws" style="display:none">
-        <div class="card">
-          <div class="ws-card">
-            <div class="ws-card-top">
-              <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div><div class="ws-mon">2026</div></div>
-              <div class="ws-info">
-                <div class="ws-title">YÜG Vizyon Belirleme Çalıştayı #1</div>
-                <div class="ws-sub">MK Novo · İstanbul · Katılımcılar: Pazarlama, Ar-Ge, IT, İcra Kurulu</div>
-                <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
-                  <span class="pill pill-green">Tamamlandı</span>
-                  <span class="pill pill-purple">AI Analiz Edildi</span>
-                </div>
-              </div>
-            </div>
-            <div class="ws-insights">
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> PLM + Proje Yönetim Aracı + DAM ihtiyacı netleşti → IT değerlendirme başlatacak</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> Vibecoding governance çerçevesi IT tarafından hazırlanacak (Claude.ai iş birimlerine açılıyor)</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--amber)"></span><span><strong style="color:var(--amber)">Risk:</strong> 15 AI Agent teknik fizibilite yapılmadan kapsam sürünümü yaşanabilir</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--blue)"></span><span><strong style="color:var(--blue)">Karar:</strong> Zero-Based Design yaklaşımı benimsendi · A/B/C/X proje sınıflandırması onaylandı</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--blue)"></span><span><strong style="color:var(--blue)">Karar:</strong> 4 Gate kriterleri tanımlandı (Fizibilite → Formülasyon → End. Deneme → Lansman)</span></div>
-            </div>
-            <div style="margin-top:10px;display:flex;gap:6px">
-              <button class="btn btn-sm" onclick="tabSwitch('yug','packs',document.querySelector('#page-yug .tab:nth-child(3)'))">IT Paketlerini Gör</button>
-              <button class="btn btn-sm btn-primary" onclick="teamsSync()">Teams Notu Aktar</button>
+        <div class="card"><div class="ws-card">
+          <div class="ws-card-top">
+            <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div><div class="ws-mon">2026</div></div>
+            <div class="ws-info">
+              <div class="ws-title">YÜG Vizyon Belirleme Çalıştayı #1</div>
+              <div class="ws-sub">MK Novo · İstanbul</div>
+              <div style="display:flex;gap:4px;margin-top:6px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Analiz Edildi</span></div>
             </div>
           </div>
-        </div>
+          <div class="ws-insights">
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> PLM + DAM ihtiyacı netleşti → IT değerlendirme başlatacak</span></div>
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> Vibecoding governance çerçevesi IT tarafından hazırlanacak</span></div>
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--amber)"></span><span><strong style="color:var(--amber)">Risk:</strong> 15 AI Agent fizibilite yapılmadan kapsam sürünümü riski</span></div>
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--blue)"></span><span><strong style="color:var(--blue)">Karar:</strong> 4 Gate kriterleri tanımlandı</span></div>
+          </div>
+        </div></div>
       </div>
       <div id="yug-packs" style="display:none">
         <div class="card"><div class="tbl-wrap"><table>
           <thead><tr><th style="width:70px">#</th><th>İş Paketi</th><th style="width:85px">Kategori</th><th style="width:60px">Efor</th><th style="width:75px">Öncelik</th><th style="width:80px">Atama</th></tr></thead>
           <tbody>
-            <tr><td style="color:var(--text3);font-size:11px">YÜG-01</td><td class="td-wrap">PLM aracı değerlendirme & seçim (RFI/demo)</td><td><span class="pill pill-red">Altyapı</span></td><td style="color:var(--text3)">10g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">A. Yılmaz</span></td></tr>
-            <tr><td style="color:var(--text3);font-size:11px">YÜG-02</td><td class="td-wrap">Fikir Yönetim Platformu prototipi (vibecoding)</td><td><span class="pill pill-purple">Geliştirme</span></td><td style="color:var(--text3)">8g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">B. Kaya</span></td></tr>
+            <tr><td style="color:var(--text3);font-size:11px">YÜG-01</td><td class="td-wrap">PLM aracı değerlendirme & seçim</td><td><span class="pill pill-red">Altyapı</span></td><td style="color:var(--text3)">10g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">A. Yılmaz</span></td></tr>
+            <tr><td style="color:var(--text3);font-size:11px">YÜG-02</td><td class="td-wrap">Fikir Yönetim Platformu prototipi</td><td><span class="pill pill-purple">Geliştirme</span></td><td style="color:var(--text3)">8g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">B. Kaya</span></td></tr>
             <tr><td style="color:var(--text3);font-size:11px">YÜG-03</td><td class="td-wrap">Vibecoding güvenlik & governance politikası</td><td><span class="pill pill-amber">Güvenlik</span></td><td style="color:var(--text3)">5g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">IT Admin</span></td></tr>
-            <tr><td style="color:var(--text3);font-size:11px">YÜG-04</td><td class="td-wrap">Stage-gate dijital iş akışı tasarımı (4 gate)</td><td><span class="pill pill-purple">Geliştirme</span></td><td style="color:var(--text3)">7g</td><td><span class="pill pill-amber">Yüksek</span></td><td><span class="tag">C. Demir</span></td></tr>
+            <tr><td style="color:var(--text3);font-size:11px">YÜG-04</td><td class="td-wrap">Stage-gate dijital iş akışı tasarımı</td><td><span class="pill pill-purple">Geliştirme</span></td><td style="color:var(--text3)">7g</td><td><span class="pill pill-amber">Yüksek</span></td><td><span class="tag">C. Demir</span></td></tr>
             <tr><td style="color:var(--text3);font-size:11px">YÜG-05</td><td class="td-wrap">DAM gereksinim analizi & araç seçimi</td><td><span class="pill pill-blue">Analiz</span></td><td style="color:var(--text3)">5g</td><td><span class="pill pill-amber">Yüksek</span></td><td><span class="tag">A. Yılmaz</span></td></tr>
             <tr><td style="color:var(--text3);font-size:11px">YÜG-06</td><td class="td-wrap">15 AI Agent teknik fizibilite raporu</td><td><span class="pill pill-teal">AI</span></td><td style="color:var(--text3)">8g</td><td><span class="pill pill-blue">Orta</span></td><td><span class="tag">D. Şahin</span></td></tr>
             <tr><td style="color:var(--text3);font-size:11px">YÜG-07</td><td class="td-wrap">Control Tower YÜG modülü entegrasyonu</td><td><span class="pill pill-purple">Geliştirme</span></td><td style="color:var(--text3)">6g</td><td><span class="pill pill-blue">Orta</span></td><td><span class="tag">B. Kaya</span></td></tr>
@@ -580,60 +255,49 @@ tbody tr:hover td{background:var(--bg)}
       </div>
       <div id="p2p-overview">
         <div class="ai-block"><div class="ai-block-label">AI Özet — P2P Vizyon Çalıştayı · 10 Nisan 2026</div>
-        <div class="ai-block-text"><strong>Kritik:</strong> SAP BP/FM modülü eksik (bütçe kontrolü yok), Doxagone CLM yetersiz. 43.2M€ harcama, 132 direkt + 480 endirekt tedarikçi. Direkt kategoride 18 adımın çoğu <strong>manuel / email bağımlı.</strong></div></div>
+        <div class="ai-block-text"><strong>Kritik:</strong> SAP BP/FM modülü eksik, Doxagone CLM yetersiz. 43.2M€ harcama, 132 direkt + 480 endirekt tedarikçi.</div></div>
         <div class="grid-3" style="margin-bottom:12px">
           <div class="card card-body" style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--purple)">5</div><div style="font-size:11px;color:var(--text3);margin-top:2px">IT İş Paketi</div></div>
           <div class="card card-body" style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--red)">2</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Kritik Karar Bekliyor</div></div>
           <div class="card card-body" style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--teal);margin-top:4px">43.2M€</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Toplam Harcama (2025)</div></div>
         </div>
-        <div class="card">
-          <div class="card-header"><span class="card-title">IT'ye Düşen Kritik Kararlar</span></div>
-          <div class="tbl-wrap"><table>
-            <thead><tr><th>Karar</th><th style="width:90px">Öncelik</th><th style="width:80px">Deadline</th></tr></thead>
-            <tbody>
-              <tr><td class="td-wrap">SAP BP/FM modülleri aktivasyonu (gerçek zamanlı bütçe kontrolü)</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
-              <tr><td class="td-wrap">CLM platform değişikliği (Doxagone yetersiz)</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
-              <tr><td class="td-wrap">SAP Fiori SAT ekranı UX yeniden tasarımı</td><td><span class="pill pill-amber">Yüksek</span></td><td style="color:var(--text3);font-size:11px">Haz 2026</td></tr>
-              <tr><td class="td-wrap">Tedarikçi Portalı gereksinim analizi ve araç seçimi</td><td><span class="pill pill-amber">Yüksek</span></td><td style="color:var(--text3);font-size:11px">Haz 2026</td></tr>
-              <tr><td class="td-wrap">EBA–SAP–QDMS entegrasyon mimarisi tasarımı</td><td><span class="pill pill-blue">Orta</span></td><td style="color:var(--text3);font-size:11px">Tem 2026</td></tr>
-            </tbody>
-          </table></div>
-        </div>
+        <div class="card"><div class="card-header"><span class="card-title">IT'ye Düşen Kritik Kararlar</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Karar</th><th style="width:90px">Öncelik</th><th style="width:80px">Deadline</th></tr></thead>
+        <tbody>
+          <tr><td class="td-wrap">SAP BP/FM modülleri aktivasyonu</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
+          <tr><td class="td-wrap">CLM platform değişikliği</td><td><span class="pill pill-red">Kritik</span></td><td style="color:var(--text3);font-size:11px">May 2026</td></tr>
+          <tr><td class="td-wrap">SAP Fiori SAT ekranı UX yeniden tasarımı</td><td><span class="pill pill-amber">Yüksek</span></td><td style="color:var(--text3);font-size:11px">Haz 2026</td></tr>
+          <tr><td class="td-wrap">Tedarikçi Portalı gereksinim analizi</td><td><span class="pill pill-amber">Yüksek</span></td><td style="color:var(--text3);font-size:11px">Haz 2026</td></tr>
+          <tr><td class="td-wrap">EBA–SAP–QDMS entegrasyon mimarisi</td><td><span class="pill pill-blue">Orta</span></td><td style="color:var(--text3);font-size:11px">Tem 2026</td></tr>
+        </tbody></table></div></div>
       </div>
       <div id="p2p-ws" style="display:none">
-        <div class="card">
-          <div class="ws-card">
-            <div class="ws-card-top">
-              <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">10</div><div class="ws-mon">2026</div></div>
-              <div class="ws-info">
-                <div class="ws-title">P2P Vizyon Belirleme Çalıştayı #1</div>
-                <div class="ws-sub">MK Novo · İstanbul · Katılımcılar: Satınalma, Finans, IT, TZY, İcra Kurulu</div>
-                <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
-                  <span class="pill pill-green">Tamamlandı</span>
-                  <span class="pill pill-purple">AI Analiz Edildi</span>
-                </div>
-              </div>
-            </div>
-            <div class="ws-insights">
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> SAP BP/FM kurulum FS hazırlanacak (IT + Satınalma)</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> CLM platform RFI süreci başlatılacak (IT + Hukuk)</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> SAT Fiori UX tasarım projesi açılacak (IT + Satınalma)</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--amber)"></span><span><strong style="color:var(--amber)">Risk:</strong> 480 endirekt tedarikçide merkezi veri tabanı yok → veri kalitesi riski</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--amber)"></span><span><strong style="color:var(--amber)">Risk:</strong> TRM Hazine modülü beklentileri karşılamıyor — SAP upgrade veya alternatif değerlendirilmeli</span></div>
-              <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--blue)"></span><span><strong style="color:var(--blue)">Karar:</strong> 11 gelişim alanı önceliklendirildi · Dokunuşsuz PO oranı ana KPI belirlendi</span></div>
+        <div class="card"><div class="ws-card">
+          <div class="ws-card-top">
+            <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">10</div><div class="ws-mon">2026</div></div>
+            <div class="ws-info">
+              <div class="ws-title">P2P Vizyon Belirleme Çalıştayı #1</div>
+              <div class="ws-sub">MK Novo · İstanbul</div>
+              <div style="display:flex;gap:4px;margin-top:6px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Analiz Edildi</span></div>
             </div>
           </div>
-        </div>
+          <div class="ws-insights">
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> SAP BP/FM kurulum FS hazırlanacak</span></div>
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--red)"></span><span><strong style="color:var(--red)">Aksiyon:</strong> CLM platform RFI süreci başlatılacak</span></div>
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--amber)"></span><span><strong style="color:var(--amber)">Risk:</strong> 480 endirekt tedarikçide merkezi veri tabanı yok</span></div>
+            <div class="ws-insight"><span class="ws-insight-dot" style="background:var(--blue)"></span><span><strong style="color:var(--blue)">Karar:</strong> Dokunuşsuz PO oranı ana KPI belirlendi</span></div>
+          </div>
+        </div></div>
       </div>
       <div id="p2p-packs" style="display:none">
         <div class="card"><div class="tbl-wrap"><table>
           <thead><tr><th style="width:70px">#</th><th>İş Paketi</th><th style="width:85px">Kategori</th><th style="width:60px">Efor</th><th style="width:75px">Öncelik</th><th style="width:80px">Atama</th></tr></thead>
           <tbody>
-            <tr><td style="color:var(--text3);font-size:11px">P2P-01</td><td class="td-wrap">SAP BP/FM modülü aktivasyon ve konfigürasyon</td><td><span class="pill pill-red">SAP Core</span></td><td style="color:var(--text3)">12g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">C. Demir</span></td></tr>
+            <tr><td style="color:var(--text3);font-size:11px">P2P-01</td><td class="td-wrap">SAP BP/FM modülü aktivasyon</td><td><span class="pill pill-red">SAP Core</span></td><td style="color:var(--text3)">12g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">C. Demir</span></td></tr>
             <tr><td style="color:var(--text3);font-size:11px">P2P-02</td><td class="td-wrap">CLM platform değerlendirme (RFI + demo)</td><td><span class="pill pill-amber">Tedarik</span></td><td style="color:var(--text3)">8g</td><td><span class="pill pill-red">Kritik</span></td><td><span class="tag">A. Yılmaz</span></td></tr>
-            <tr><td style="color:var(--text3);font-size:11px">P2P-03</td><td class="td-wrap">SAP Fiori SAT ekranı UX tasarım ve geliştirme</td><td><span class="pill pill-purple">SAP UX</span></td><td style="color:var(--text3)">10g</td><td><span class="pill pill-amber">Yüksek</span></td><td><span class="tag">E. Çelik</span></td></tr>
+            <tr><td style="color:var(--text3);font-size:11px">P2P-03</td><td class="td-wrap">SAP Fiori SAT ekranı UX tasarımı</td><td><span class="pill pill-purple">SAP UX</span></td><td style="color:var(--text3)">10g</td><td><span class="pill pill-amber">Yüksek</span></td><td><span class="tag">E. Çelik</span></td></tr>
             <tr><td style="color:var(--text3);font-size:11px">P2P-04</td><td class="td-wrap">Tedarikçi Portalı gereksinim & araç seçimi</td><td><span class="pill pill-blue">Analiz</span></td><td style="color:var(--text3)">6g</td><td><span class="pill pill-amber">Yüksek</span></td><td><span class="tag">D. Şahin</span></td></tr>
-            <tr><td style="color:var(--text3);font-size:11px">P2P-05</td><td class="td-wrap">EBA–SAP–QDMS entegrasyon mimarisi tasarımı</td><td><span class="pill pill-teal">Entegrasyon</span></td><td style="color:var(--text3)">8g</td><td><span class="pill pill-blue">Orta</span></td><td><span class="tag">C. Demir</span></td></tr>
+            <tr><td style="color:var(--text3);font-size:11px">P2P-05</td><td class="td-wrap">EBA–SAP–QDMS entegrasyon mimarisi</td><td><span class="pill pill-teal">Entegrasyon</span></td><td style="color:var(--text3)">8g</td><td><span class="pill pill-blue">Orta</span></td><td><span class="tag">C. Demir</span></td></tr>
           </tbody>
         </table></div></div>
       </div>
@@ -643,40 +307,20 @@ tbody tr:hover td{background:var(--bg)}
     <div id="page-workshops" class="page">
       <div class="tabs">
         <div class="tab active" onclick="wsMainTab('upcoming',this)">Yaklaşan (3)</div>
-        <div class="tab" onclick="wsMainTab('done',this)">Tamamlanan & AI Analiz (2)</div>
+        <div class="tab" onclick="wsMainTab('done',this)">Tamamlanan (2)</div>
       </div>
-      <div id="ws-upcoming-tab">
-        <div class="grid-2" id="ws-upcoming-grid"></div>
-      </div>
+      <div id="ws-upcoming-tab"><div class="grid-2" id="ws-upcoming-grid"></div></div>
       <div id="ws-done-tab" style="display:none">
-        <div class="card" style="margin-bottom:10px">
-          <div class="ws-card">
-            <div class="ws-card-top">
-              <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div><div class="ws-mon">2026</div></div>
-              <div class="ws-info">
-                <div class="ws-title">YÜG Vizyon Çalıştayı #1</div>
-                <div class="ws-sub">7 IT iş paketi · 3 kritik karar · PLM + DAM + Vibecoding governance</div>
-                <div style="margin-top:6px;display:flex;gap:5px">
-                  <button class="btn btn-sm" onclick="navigate('yug',null)">Projeye Git →</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ws-card">
-            <div class="ws-card-top">
-              <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">10</div><div class="ws-mon">2026</div></div>
-              <div class="ws-info">
-                <div class="ws-title">P2P Vizyon Çalıştayı #1</div>
-                <div class="ws-sub">5 IT iş paketi · SAP BP/FM + CLM kritik · 43.2M€ harcama bağlamı</div>
-                <div style="margin-top:6px;display:flex;gap:5px">
-                  <button class="btn btn-sm" onclick="navigate('p2p',null)">Projeye Git →</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="card" style="margin-bottom:10px"><div class="ws-card"><div class="ws-card-top">
+          <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div></div>
+          <div class="ws-info"><div class="ws-title">YÜG Vizyon Çalıştayı #1</div><div class="ws-sub">7 IT iş paketi · PLM + DAM + Vibecoding</div>
+          <div style="margin-top:6px"><button class="btn btn-sm" onclick="navigate('yug',null)">Projeye Git →</button></div></div>
+        </div></div></div>
+        <div class="card"><div class="ws-card"><div class="ws-card-top">
+          <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">10</div></div>
+          <div class="ws-info"><div class="ws-title">P2P Vizyon Çalıştayı #1</div><div class="ws-sub">5 IT iş paketi · SAP BP/FM + CLM kritik</div>
+          <div style="margin-top:6px"><button class="btn btn-sm" onclick="navigate('p2p',null)">Projeye Git →</button></div></div>
+        </div></div></div>
       </div>
     </div>
 
@@ -689,14 +333,13 @@ tbody tr:hover td{background:var(--bg)}
             <input type="text" placeholder="Aksiyon ara..." id="action-search" oninput="renderActions()">
           </div>
           <div class="filter-chips" id="action-filter-chips">
-            <div class="chip active" onclick="filterAction('all',this)">Tümü (12)</div>
-            <div class="chip" onclick="filterAction('late',this)">Gecikmiş (3)</div>
+            <div class="chip active" onclick="filterAction('all',this)">Tümü</div>
+            <div class="chip" onclick="filterAction('late',this)">Gecikmiş</div>
             <div class="chip" onclick="filterAction('open',this)">Açık</div>
             <div class="chip" onclick="filterAction('done',this)">Tamamlanan</div>
-            <div class="chip" onclick="filterAction('ws',this)">Çalıştaydan Gelenler</div>
+            <div class="chip" onclick="filterAction('ws',this)">Çalıştaydan</div>
           </div>
         </div>
-        <button class="btn btn-sm btn-primary" onclick="aiExtractActions()">AI → İş Paketi Üret ↗</button>
       </div>
       <div class="card" id="action-list"></div>
     </div>
@@ -704,7 +347,7 @@ tbody tr:hover td{background:var(--bg)}
     <!-- RESOURCES -->
     <div id="page-resources" class="page">
       <div class="card">
-        <div class="card-header"><span class="card-title">IT Ekibi — Fusion Kapasite Durumu</span></div>
+        <div class="card-header"><span class="card-title">IT Ekibi — Kapasite Durumu</span></div>
         <div id="resource-list"></div>
       </div>
     </div>
@@ -712,18 +355,11 @@ tbody tr:hover td{background:var(--bg)}
     <!-- DOCS -->
     <div id="page-docs" class="page">
       <div class="ai-block"><div class="ai-block-label">AI Doküman Analiz Motoru</div>
-      <div class="ai-block-text">Yüklenen çalıştay dokümanları otomatik analiz edilerek <strong>aksiyonlar, riskler ve IT iş paketleri</strong> çıkarılır. Teams toplantı notları da platforma otomatik akar.</div></div>
-      <div class="upload-zone" onclick="uploadDoc()">
+      <div class="ai-block-text">Yüklenen dokümanlar otomatik analiz edilerek <strong>aksiyonlar, riskler ve IT iş paketleri</strong> çıkarılır.</div></div>
+      <div class="upload-zone" onclick="alert('Doküman yükleme yakında!')">
         <div class="upload-zone-icon">+</div>
         <div class="upload-zone-text">Doküman yükle veya sürükle bırak</div>
-        <div class="upload-zone-sub">PDF, DOCX, PPTX, Teams transkript — AI otomatik analiz eder</div>
-      </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Analiz Edilmiş Dokümanlar</span></div>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Dosya Adı</th><th style="width:90px">Proje</th><th style="width:70px">Tür</th><th style="width:75px">IT Paketi</th><th style="width:100px">AI Özet</th></tr></thead>
-          <tbody id="doc-table"></tbody>
-        </table></div>
+        <div class="upload-zone-sub">PDF, DOCX, PPTX, Teams transkript</div>
       </div>
     </div>
 
@@ -732,7 +368,10 @@ tbody tr:hover td{background:var(--bg)}
       <div class="card">
         <div class="card-header"><span class="card-title">Risk Kaydı — Çalıştay Kaynaklı</span></div>
         <div class="tbl-wrap"><table>
-          <thead><tr><th style="width:70px">Seviye</th><th>Risk</th><th style="width:100px">Kaynak</th><th style="width:80px">Sahip</th><th style="width:80px">Durum</th></tr></thead>
+          <thead><tr>
+            <th style="width:70px">Seviye</th><th>Risk</th>
+            <th style="width:100px">Kaynak</th><th style="width:80px">Sahip</th><th style="width:80px">Durum</th>
+          </tr></thead>
           <tbody id="risk-table"></tbody>
         </table></div>
       </div>
@@ -753,412 +392,80 @@ tbody tr:hover td{background:var(--bg)}
 </div>
 </div>
 
+<script src="js/supabase.js"></script>
+<script src="js/data.js"></script>
+<script src="js/render.js"></script>
 <script>
-let sidebarOpen=false;
-function toggleSidebar(){
-  sidebarOpen=!sidebarOpen;
-  document.getElementById('sidebar').classList.toggle('expanded',sidebarOpen);
-  const arr=document.querySelector('.sidebar-toggle svg');
-  if(arr) arr.style.transform=sidebarOpen?'rotate(180deg)':'';
+let sidebarOpen = false;
+
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('expanded', sidebarOpen);
+  const arr = document.querySelector('.sidebar-toggle svg');
+  if (arr) arr.style.transform = sidebarOpen ? 'rotate(180deg)' : '';
 }
 
-const projects=[
-  {n:"YÜG — Yeni Ürün Geliştirme",unit:"Pazarlama/ARGE",phase:"Vizyon",rag:"green",packs:7,date:"Nis 2026"},
-  {n:"P2P — Satınalma → Ödeme",unit:"Satınalma/Finans",phase:"Vizyon",rag:"green",packs:5,date:"10 Nis 2026"},
-  {n:"E-ticaret Platformu",unit:"Pazarlama",phase:"Faz 2",rag:"green",packs:4,date:"12 Nis 2026"},
-  {n:"HR Dijitalleşme",unit:"İnsan Kay.",phase:"Kick-off",rag:"amber",packs:3,date:"8 Nis 2026"},
-  {n:"CRM Entegrasyonu",unit:"Satış",phase:"Faz 1",rag:"amber",packs:3,date:"9 Nis 2026"},
-  {n:"Mağaza Analitik",unit:"Perakende",phase:"Analiz",rag:"red",packs:2,date:"7 Nis 2026"},
-  {n:"Tedarik Zinciri Opt.",unit:"Lojistik",phase:"Faz 3",rag:"green",packs:2,date:"12 Nis 2026"},
-  {n:"Finans Raporlama",unit:"Finans",phase:"Faz 2",rag:"green",packs:2,date:"11 Nis 2026"},
-  {n:"Üretim MES",unit:"Üretim",phase:"Faz 2",rag:"green",packs:3,date:"13 Nis 2026"},
-  {n:"Stok Optimizasyon",unit:"Lojistik",phase:"Faz 1",rag:"green",packs:1,date:"10 Nis 2026"},
-  {n:"Dijital Katalog",unit:"Ürün",phase:"Faz 2",rag:"green",packs:2,date:"11 Nis 2026"},
-];
-
-const actions=[
-  {id:1,t:"PLM aracı demo takvimi oluştur (3 vendor)",p:"YÜG",o:"A. Yılmaz",due:"15 Nis",s:"late",src:"ws"},
-  {id:2,t:"CLM platform RFI belgesi hazırla",p:"P2P",o:"A. Yılmaz",due:"12 Nis",s:"late",src:"ws"},
-  {id:3,t:"EBA-SAP-QDMS entegrasyon AS-IS haritası",p:"P2P",o:"C. Demir",due:"11 Nis",s:"late",src:"ws"},
-  {id:4,t:"SAP BP/FM modülü aktivasyon FS hazırla",p:"P2P",o:"C. Demir",due:"18 Nis",s:"open",src:"ws"},
-  {id:5,t:"Vibecoding governance politikası taslağı",p:"Fusion",o:"IT Admin",due:"20 Nis",s:"open",src:"ws"},
-  {id:6,t:"SAP Fiori SAT ekranı UX prototipi",p:"P2P",o:"E. Çelik",due:"22 Nis",s:"open",src:"ws"},
-  {id:7,t:"15 AI Agent teknik fizibilite raporu",p:"YÜG",o:"D. Şahin",due:"25 Nis",s:"open",src:"ws"},
-  {id:8,t:"DAM gereksinim toplantısı organize et",p:"YÜG",o:"B. Kaya",due:"19 Nis",s:"open",src:"ws"},
-  {id:9,t:"Fusion Control Tower MVP geliştirme kickoff",p:"Fusion",o:"IT Admin",due:"17 Nis",s:"open",src:"ic"},
-  {id:10,t:"Teams Facilitator → platform entegrasyon PoC",p:"Fusion",o:"B. Kaya",due:"24 Nis",s:"open",src:"ic"},
-  {id:11,t:"HR Dijitalleşme çalıştay hazırlığı",p:"HR",o:"E. Çelik",due:"16 Nis",s:"done",src:"ws"},
-  {id:12,t:"Mağaza veri kalitesi acil aksiyon planı",p:"Mağaza",o:"D. Şahin",due:"10 Nis",s:"late",src:"ws"},
-];
-
-const resources=[
-  {n:"Ahmet Y.",r:"IT Mimarı",load:88,pp:["YÜG","P2P"]},
-  {n:"Betül K.",r:"Geliştirici",load:72,pp:["YÜG","Fusion"]},
-  {n:"Can D.",r:"SAP Uzmanı",load:95,pp:["P2P"]},
-  {n:"Deniz Ş.",r:"Veri Analisti",load:91,pp:["Mağaza","YÜG"]},
-  {n:"Elif Ç.",r:"UX / Fiori",load:68,pp:["P2P","CRM"]},
-  {n:"IT Admin",r:"Dijital Dept.",load:60,pp:["Fusion","HR"]},
-];
-
-const docs=[
-  {n:"YUG_Vizyon_Calistay_Nis2026.pdf",p:"YÜG",t:"Çalıştay",packs:7,ai:true},
-  {n:"P2P_Vizyon_Calistay_10Nis2026.pdf",p:"P2P",t:"Çalıştay",packs:5,ai:true},
-  {n:"Fusion_Roadmap_MKNovo.pdf",p:"Fusion",t:"Roadmap",packs:0,ai:true},
-  {n:"P2P_Spend_Analiz_2025.xlsx",p:"P2P",t:"Veri",packs:0,ai:false},
-];
-
-const risks=[
-  {lv:"red",d:"SAP BP/FM eksik → gerçek zamanlı bütçe kontrolü yapılamıyor",s:"P2P Çalıştay",o:"IT/Finans",st:"Açık"},
-  {lv:"red",d:"PLM aracı olmadan YÜG süreç takibi Excel'de kalıyor",s:"YÜG Çalıştay",o:"IT/ARGE",st:"Açık"},
-  {lv:"amber",d:"15 AI Agent fizibilite yapılmadan kapsam sürünümü riski",s:"YÜG Çalıştay",o:"IT Admin",st:"İzleniyor"},
-  {lv:"amber",d:"Doxagone CLM beklentileri karşılamıyor",s:"P2P Çalıştay",o:"IT/Hukuk",st:"İzleniyor"},
-  {lv:"amber",d:"480 endirekt tedarikçide merkezi veri tabanı eksikliği",s:"P2P Çalıştay",o:"IT/Satınalma",st:"İzleniyor"},
-  {lv:"green",d:"Vibecoding governance taslak tamamlandı",s:"Fusion",o:"IT Admin",st:"Kapandı"},
-];
-
-const roadmapData=[
-  {title:"Phase 1 — Vizyon & Temel Altyapı",tf:"Nisan – Mayıs 2026",col:"var(--red)",items:[
-    {n:1,t:"PLM Aracı Değerlendirme & Seçim",d:"YÜG sürecinin omurgası. RFI hazırla, 3 vendor demo. Gate 1 öncesi tamamlanmalı.",tags:["YÜG","Altyapı","10g"]},
-    {n:2,t:"SAP BP/FM Modülü Aktivasyonu",d:"P2P bütçe kontrolünün ön koşulu. FS hazırla, SAP danışmanıyla konfigürasyon.",tags:["P2P","SAP Core","12g"]},
-    {n:3,t:"CLM Platform RFI & Demo",d:"Doxagone yetersiz. Yeni CLM için RFI hazırla, hukuk birimini dahil et.",tags:["P2P","Tedarik","8g"]},
-    {n:4,t:"Vibecoding Governance Çerçevesi",d:"Claude.ai üzerinden iş birimi geliştirmesi başlamadan önce veri güvenliği ve erişim kontrolü tanımlanmalı.",tags:["Fusion","Güvenlik","5g"]},
-    {n:5,t:"Fusion Control Tower MVP",d:"Bu platformun çalışan v1'i. Proje takibi, çalıştay özeti, IT iş paketi yönetimi.",tags:["Fusion","Geliştirme","15g"]},
-  ]},
-  {title:"Phase 2 — Dijitalleşme & Entegrasyon",tf:"Haziran – Temmuz 2026",col:"var(--amber)",items:[
-    {n:6,t:"SAP Fiori SAT Ekranı UX Tasarımı",d:"Akıllı SAT Ajanı altyapısı. Bütçe doğrulayan, konsolidasyon öneren Fiori UI.",tags:["P2P","SAP UX","10g"]},
-    {n:7,t:"EBA–SAP–QDMS Entegrasyon Mimarisi",d:"5 sistemin bağlanması için API katmanı ve veri akışı tasarımı.",tags:["P2P","Entegrasyon","8g"]},
-    {n:8,t:"YÜG Stage-Gate Dijital İş Akışı",d:"4 gate kriterinin platforma entegrasyonu. Onay akışları ve bildirimler.",tags:["YÜG","Geliştirme","7g"]},
-    {n:9,t:"Teams → Platform Otomatik Entegrasyonu",d:"Toplantı notlarının platforma otomatik akması. AI özet ve aksiyon çıkarma.",tags:["Fusion","AI","6g"]},
-    {n:10,t:"Tedarikçi Portalı Gereksinim Analizi",d:"Self-servis onboarding ve sipariş takibi için gereksinim analizi ve araç seçimi.",tags:["P2P","Analiz","6g"]},
-  ]},
-  {title:"Phase 3 — AI & İleri Otomasyon",tf:"Ağustos – Ekim 2026",col:"var(--blue)",items:[
-    {n:11,t:"15 AI Agent Teknik Fizibilite",d:"YÜG'deki 15 agent için maliyet analizi ve önceliklendirme raporu.",tags:["YÜG","AI","8g"]},
-    {n:12,t:"DAM Kurulumu",d:"Ürün içerik ve görsellerinin tüm kanal ihtiyaçlarını karşılayacak dijital platformu.",tags:["YÜG","Altyapı","7g"]},
-    {n:13,t:"P2P AI Agent Pilotları",d:"Akıllı SAT Ajanı, Fatura Eşleştirme Ajanı ve Bütçe Kontrol Ajanı pilotları.",tags:["P2P","AI","10g"]},
-    {n:14,t:"Fusion Kurumsal Hafıza",d:"Tüm çalıştay özetleri üzerinde doğal dil sorgulama altyapısı.",tags:["Fusion","AI","8g"]},
-  ]},
-];
-
-const workshopsUpcoming=[
-  {d:"15 Nis",day:"Pzt",n:"YÜG Haftalık Çalıştay #2",p:"YÜG",t:"10:00"},
-  {d:"15 Nis",day:"Pzt",n:"P2P Tasarım Çalıştayı #2",p:"P2P",t:"14:00"},
-  {d:"16 Nis",day:"Sal",n:"HR Dijitalleşme Kick-off",p:"HR",t:"09:30"},
-];
-
-let actionFilter='all';
-let projFilterVal='all';
-
-function pill(r){
-  if(r==='green') return '<span class="pill pill-green">Yolunda</span>';
-  if(r==='amber') return '<span class="pill pill-amber">Dikkat</span>';
-  return '<span class="pill pill-red">Kritik</span>';
-}
-function dot(r){const c=r==='green'?'#639922':r==='amber'?'#ba7517':'#e24b4a';return `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c}"></span>`;}
-
-function renderDashboard(){
-  // proj list
-  const pl=document.getElementById('proj-list');
-  pl.innerHTML=projects.slice(0,6).map(p=>`
-    <div class="proj-item" onclick="navigate('projects',null)">
-      <div class="proj-dot" style="background:${p.rag==='green'?'#639922':p.rag==='amber'?'#ba7517':'#e24b4a'}"></div>
-      <div class="proj-info">
-        <div class="proj-name">${p.n}</div>
-        <div class="proj-meta">${p.unit} · ${p.phase}</div>
-      </div>
-      ${pill(p.rag)}
-      <div class="proj-packs"><div class="proj-packs-num">${p.packs}</div><div class="proj-packs-label">paket</div></div>
-    </div>`).join('');
-
-  // action mini
-  const am=document.getElementById('action-mini');
-  const late=actions.filter(a=>a.s==='late');
-  am.innerHTML=late.map(a=>`
-    <div class="action-item">
-      <div class="check-box"></div>
-      <div class="action-body">
-        <div class="action-title">${a.t}</div>
-        <div class="action-footer">
-          <span class="tag">${a.p}</span>
-          <span class="action-due late">⚠ ${a.due}</span>
-          <span style="font-size:11px;color:var(--text3)">${a.o}</span>
-        </div>
-      </div>
-    </div>`).join('');
-
-  // ws mini
-  const wm=document.getElementById('ws-mini');
-  wm.innerHTML=`
-    <div class="ws-card">
-      <div class="ws-card-top">
-        <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div></div>
-        <div class="ws-info">
-          <div class="ws-title">YÜG Vizyon Çalıştayı #1</div>
-          <div class="ws-sub">7 IT paketi · PLM + DAM + Governance</div>
-          <div style="display:flex;gap:4px;margin-top:5px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Analiz Edildi</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="ws-card">
-      <div class="ws-card-top">
-        <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">10</div></div>
-        <div class="ws-info">
-          <div class="ws-title">P2P Vizyon Çalıştayı #1</div>
-          <div class="ws-sub">5 IT paketi · SAP BP/FM + CLM kritik</div>
-          <div style="display:flex;gap:4px;margin-top:5px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Analiz Edildi</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="ws-card" style="border-bottom:none">
-      <div class="ws-card-top">
-        <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">15</div></div>
-        <div class="ws-info">
-          <div class="ws-title">YÜG + P2P Haftalık</div>
-          <div class="ws-sub">Yarın · 10:00 ve 14:00</div>
-          <div style="margin-top:5px"><span class="pill pill-amber">Yaklaşan</span></div>
-        </div>
-      </div>
-    </div>`;
-
-  // risk mini
-  const rm=document.getElementById('risk-mini');
-  rm.innerHTML=risks.filter(r=>r.st!=='Kapandı').slice(0,4).map(r=>`
-    <div class="action-item">
-      <div style="width:20px;height:20px;border-radius:4px;background:${r.lv==='red'?'var(--red-bg)':'var(--amber-bg)'};color:${r.lv==='red'?'var(--red)':'var(--amber)'};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${r.lv==='red'?'!':'~'}</div>
-      <div class="action-body">
-        <div class="action-title">${r.d}</div>
-        <div class="action-footer"><span class="tag">${r.s}</span><span style="font-size:11px;color:var(--text3)">${r.o}</span></div>
-      </div>
-    </div>`).join('');
-}
-
-function renderAllProjects(){
-  const tb=document.getElementById('all-proj-table');
-  const list=projFilterVal==='all'?projects:projects.filter(p=>p.rag===projFilterVal);
-  tb.innerHTML=list.map(p=>`
-    <tr>
-      <td>${dot(p.rag)}</td>
-      <td class="td-wrap" style="font-weight:500">${p.n}</td>
-      <td class="td-clip" style="color:var(--text2)">${p.unit}</td>
-      <td><span class="pill pill-gray">${p.phase}</span></td>
-      <td style="text-align:center;font-weight:600;color:var(--amber)">${p.packs}</td>
-      <td style="color:var(--text3);font-size:11px">${p.date}</td>
-      <td>${pill(p.rag)}</td>
-    </tr>`).join('');
-}
-
-function projFilter(f,el){
-  projFilterVal=f;
-  document.querySelectorAll('.filter-chips .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  renderAllProjects();
-}
-
-function filterProjs(){}
-
-function renderActions(){
-  const q=(document.getElementById('action-search')||{value:''}).value.toLowerCase();
-  let list=actions;
-  if(actionFilter==='late') list=list.filter(a=>a.s==='late');
-  else if(actionFilter==='open') list=list.filter(a=>a.s==='open');
-  else if(actionFilter==='done') list=list.filter(a=>a.s==='done');
-  else if(actionFilter==='ws') list=list.filter(a=>a.src==='ws');
-  if(q) list=list.filter(a=>a.t.toLowerCase().includes(q)||a.p.toLowerCase().includes(q));
-  const el=document.getElementById('action-list');
-  if(!list.length){
-    el.innerHTML=`<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-title">Aksiyon bulunamadı</div><div class="empty-text">Seçili filtre için aksiyon yok.</div></div>`;
-    return;
+function tabSwitch(page, section, el) {
+  if (el) {
+    document.querySelectorAll(`#page-${page} .tab`).forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
   }
-  el.innerHTML=list.map(a=>{
-    const done=a.s==='done', late=a.s==='late';
-    return `<div class="action-item">
-      <div class="check-box ${done?'done':''}" onclick="toggleAction(${a.id})">
-        ${done?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 4.5l2 2 3-3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>':''}
-      </div>
-      <div class="action-body">
-        <div class="action-title ${done?'done':''}">${a.t}</div>
-        <div class="action-footer">
-          <span class="tag">${a.p}</span>
-          ${a.src==='ws'?'<span class="pill pill-purple" style="font-size:9px">çalıştay</span>':''}
-          <span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''} ${a.due}</span>
-          <span style="font-size:11px;color:var(--text3)">${a.o}</span>
-        </div>
-      </div>
-      <div style="flex-shrink:0">${pill(done?'green':late?'red':'amber')}</div>
-    </div>`;}).join('');
-}
-
-function toggleAction(id){
-  const a=actions.find(x=>x.id===id);
-  if(a) a.s=a.s==='done'?'open':'done';
-  renderActions();
-}
-
-function filterAction(f,el){
-  actionFilter=f;
-  document.querySelectorAll('#action-filter-chips .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  renderActions();
-}
-
-function renderResources(){
-  const el=document.getElementById('resource-list');
-  el.innerHTML=resources.map(r=>{
-    const h=r.load>85,m=r.load>65;
-    const c=h?'var(--red)':m?'var(--amber)':'var(--green)';
-    const bg=h?'var(--red-bg)':m?'var(--amber-bg)':'var(--green-bg)';
-    const ini=r.n.replace('.',' ').split(' ').map(w=>w[0]).join('');
-    return `<div class="res-row">
-      <div class="avatar" style="background:${bg};color:${c}">${ini}</div>
-      <div style="min-width:90px"><div style="font-size:12px;font-weight:500">${r.n}</div><div style="font-size:10px;color:var(--text3)">${r.r}</div></div>
-      <div class="cap-track"><div class="cap-fill" style="width:${r.load}%;background:${c}"></div></div>
-      <div style="min-width:36px;text-align:right;font-size:12px;font-weight:600;color:${c}">${r.load}%</div>
-      <div style="min-width:100px;text-align:right">${r.pp.map(p=>`<span class="tag">${p}</span>`).join('')}</div>
-    </div>`;}).join('');
-}
-
-function renderDocs(){
-  document.getElementById('doc-table').innerHTML=docs.map(d=>`
-    <tr>
-      <td style="color:var(--blue);cursor:pointer;font-size:12px">${d.n}</td>
-      <td><span class="tag">${d.p}</span></td>
-      <td><span class="tag">${d.t}</span></td>
-      <td style="text-align:center;font-size:12px;font-weight:600;color:${d.packs>0?'var(--amber)':'var(--text3)'}">${d.packs>0?d.packs+' paket':'—'}</td>
-      <td>${d.ai?'<button class="btn btn-sm" onclick="alert(\'AI özet...\')">Özeti Gör ↗</button>':'<button class="btn btn-sm" onclick="alert(\'AI analiz başladı\')">Analiz Et</button>'}</td>
-    </tr>`).join('');
-}
-
-function renderRisks(){
-  document.getElementById('risk-table').innerHTML=risks.map(r=>`
-    <tr>
-      <td>${pill(r.lv)}</td>
-      <td class="td-wrap" style="font-size:12px">${r.d}</td>
-      <td><span class="tag">${r.s}</span></td>
-      <td style="color:var(--text2);font-size:11px">${r.o}</td>
-      <td><span class="pill ${r.st==='Kapandı'?'pill-green':r.st==='İzleniyor'?'pill-amber':'pill-red'}">${r.st}</span></td>
-    </tr>`).join('');
-}
-
-function renderBriefing(){
-  document.getElementById('briefing-content').innerHTML=`
-    <div class="brief-kpis">
-      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--purple)">11</div><div class="brief-kpi-label">Aktif Proje</div></div>
-      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--amber)">12</div><div class="brief-kpi-label">IT İş Paketi</div></div>
-      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--red)">3</div><div class="brief-kpi-label">Gecikmiş</div></div>
-      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--teal)">78%</div><div class="brief-kpi-label">IT Kapasite</div></div>
-    </div>
-    <div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Öne Çıkanlar</div>
-      <div style="font-size:12px;line-height:1.8;color:var(--text)">YÜG ve P2P vizyon çalıştayları tamamlandı; toplam <strong>12 IT iş paketi</strong> çıkarıldı. <strong>SAP BP/FM modülü eksikliği</strong> P2P bütçe kontrolünü bloke etmektedir. <strong>PLM aracı</strong> için 3 vendor demo bu hafta başlamalıdır.</div>
-    </div>
-    <div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Eskalasyon</div>
-      <div class="eskalasyon">SAP BP/FM aktivasyonu için bütçe onayı ve SAP danışman takvimi gerekiyor — IT tek başına kapatamaz.</div>
-      <div class="eskalasyon eskalasyon-amber">Mağaza Analitik veri kalitesi sorunu: IT + Perakende ortak aksiyon planı bekleniyor.</div>
-    </div>
-    <div>
-      <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">Bu Hafta Öncelikleri</div>
-      <div style="font-size:12px;line-height:2;color:var(--text)">
-        · PLM vendor demo toplantısı takvimi netleştirilecek (Ahmet Y.)<br>
-        · SAP BP/FM FS taslağı tamamlanacak (Can D.)<br>
-        · Vibecoding governance çerçevesi taslak haline getirilecek (IT Admin)<br>
-        · HR Kick-off çalıştayı IT iş paketleri platforma eklenecek<br>
-        · Teams → platform entegrasyon PoC başlatılacak (Betül K.)
-      </div>
-    </div>`;
-}
-
-function renderRoadmap(){
-  document.getElementById('roadmap-body').innerHTML=roadmapData.map((ph,i)=>`
-    <div class="phase-card">
-      <div class="phase-header" onclick="togglePhase(${i})">
-        <div class="phase-stripe" style="background:${ph.col}"></div>
-        <div class="phase-meta">
-          <div class="phase-title">${ph.title}</div>
-          <div class="phase-timeframe">${ph.tf}</div>
-        </div>
-        <span class="phase-count">${ph.items.length} iş paketi</span>
-        <span class="phase-chevron open" id="ph-arr-${i}">▼</span>
-      </div>
-      <div class="phase-body" id="ph-body-${i}">
-        ${ph.items.map(it=>`
-          <div class="roadmap-item">
-            <div class="rmap-num" style="background:${ph.col}22;color:${ph.col}">${it.n}</div>
-            <div class="rmap-body">
-              <div class="rmap-title">${it.t}</div>
-              <div class="rmap-desc">${it.d}</div>
-              <div class="rmap-tags">${it.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`).join('');
-}
-
-function togglePhase(i){
-  const b=document.getElementById('ph-body-'+i);
-  const a=document.getElementById('ph-arr-'+i);
-  const open=b.style.display!=='none';
-  b.style.display=open?'none':'block';
-  a.classList.toggle('open',!open);
-  a.style.transform=open?'rotate(-90deg)':'';
-}
-
-function renderWorkshops(){
-  document.getElementById('ws-upcoming-grid').innerHTML=workshopsUpcoming.map(w=>`
-    <div class="card">
-      <div class="card-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <span class="pill pill-amber">Yaklaşan</span>
-          <span style="font-size:11px;color:var(--text3)">${w.d} · ${w.t}</span>
-        </div>
-        <div style="font-weight:600;font-size:13px;margin-bottom:2px">${w.n}</div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${w.p}</div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-sm">Ajanda</button>
-          <button class="btn btn-sm btn-primary" onclick="teamsSync()">Teams Notu Hazırla</button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-
-function tabSwitch(page, section, el){
-  if(el){document.querySelectorAll(`#page-${page} .tab`).forEach(t=>t.classList.remove('active'));el.classList.add('active');}
-  const sections={yug:['overview','ws','packs'],p2p:['overview','ws','packs']};
-  (sections[page]||[]).forEach(s=>{
-    const el2=document.getElementById(`${page}-${s}`);
-    if(el2) el2.style.display=s===section?'block':'none';
+  const sections = {yug: ['overview','ws','packs'], p2p: ['overview','ws','packs']};
+  (sections[page] || []).forEach(s => {
+    const e = document.getElementById(`${page}-${s}`);
+    if (e) e.style.display = s === section ? 'block' : 'none';
   });
 }
 
-function wsMainTab(tab,el){
-  document.querySelectorAll('#page-workshops .tab').forEach(t=>t.classList.remove('active'));
+function wsMainTab(tab, el) {
+  document.querySelectorAll('#page-workshops .tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('ws-upcoming-tab').style.display=tab==='upcoming'?'block':'none';
-  document.getElementById('ws-done-tab').style.display=tab==='done'?'block':'none';
+  document.getElementById('ws-upcoming-tab').style.display = tab === 'upcoming' ? 'block' : 'none';
+  document.getElementById('ws-done-tab').style.display = tab === 'done' ? 'block' : 'none';
 }
 
-function navigate(page,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  if(el) el.classList.add('active');
-  const titles={dashboard:'Dashboard',roadmap:'IT Roadmap',projects:'Tüm Projeler',yug:'YÜG — Yeni Ürün Geliştirme',p2p:'P2P — Satınalma → Ödeme',workshops:'Çalıştaylar',actions:'IT Aksiyonları',resources:'Kaynaklar',docs:'Dokümanlar & AI',briefing:'Yönetim Brifing',risks:'Risk Kaydı'};
-  document.getElementById('bc-current').textContent=titles[page]||page;
-  if(page==='roadmap') renderRoadmap();
-  if(page==='projects') renderAllProjects();
-  if(page==='actions') renderActions();
-  if(page==='resources') renderResources();
-  if(page==='docs') renderDocs();
-  if(page==='risks') renderRisks();
-  if(page==='briefing') renderBriefing();
-  if(page==='workshops') renderWorkshops();
+function navigate(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', roadmap:'IT Roadmap', projects:'Tüm Projeler',
+    yug:'YÜG — Yeni Ürün Geliştirme', p2p:'P2P — Satınalma → Ödeme',
+    workshops:'Çalıştaylar', actions:'IT Aksiyonları', resources:'Kaynaklar',
+    docs:'Dokümanlar & AI', briefing:'Yönetim Brifing', risks:'Risk Kaydı'
+  };
+  document.getElementById('bc-current').textContent = titles[page] || page;
+  if (page === 'roadmap') renderRoadmap();
+  if (page === 'projects') renderAllProjects();
+  if (page === 'actions') renderActions();
+  if (page === 'resources') renderResources();
+  if (page === 'risks') renderRisks();
+  if (page === 'briefing') renderBriefing();
+  if (page === 'workshops') renderWorkshops();
 }
 
-function aiAction(){alert('AI Özet Motoru\n\nYÜG + P2P dokümanları analiz edildi:\n• 12 IT iş paketi çıkarıldı\n• 5 risk işaretlendi\n• 3 gecikmiş aksiyon uyarısı');}
-function teamsSync(){alert('Teams Facilitator Entegrasyonu\n\nToplantı notları platforma aktarılıyor...\n→ Gereksiz detaylar temizleniyor\n→ Aksiyonlar ayrıştırılıyor\n→ Riskler işaretleniyor\n\nÖzet 2 dakikada hazır.');}
-function aiExtractActions(){alert('AI → IT İş Paketi Üretici\n\nDokümanlar taranıyor...\n→ 4 yeni iş paketi tespit edildi\n→ Efor tahmini yapıldı\n→ Öneri atamalar hazır');}
-function uploadDoc(){alert('Doküman yükleme\n\nPDF, DOCX, PPTX, Teams transkript desteklenir.\nAI analizi otomatik başlar.');}
+function updateBadges() {
+  const lateCount = actions.filter(a => a.status === 'late').length;
+  document.getElementById('badge-projects').textContent = projects.length;
+  document.getElementById('badge-actions').textContent = lateCount;
+  document.getElementById('urgency-count').textContent = lateCount;
+  document.getElementById('metric-late-badge').textContent = lateCount + ' geç';
+  const avgLoad = resources.length
+    ? Math.round(resources.reduce((s, r) => s + r.load, 0) / resources.length) : 0;
+  document.getElementById('metric-load').textContent = avgLoad + '%';
+  const overloaded = resources.filter(r => r.load > 85).map(r => r.name).join(' & ');
+  document.getElementById('metric-load-sub').textContent = overloaded ? overloaded + ' aşırı yüklü' : 'Kapasite normal';
+  const riskCount = projects.filter(p => p.rag !== 'green').length;
+  document.getElementById('metric-projects-sub').textContent =
+    `${projects.length - riskCount} yolunda · ${riskCount} riskli`;
+}
 
-renderDashboard();
+function aiAction() { alert('AI Özet Motoru\n\nYÜG + P2P dokümanları analiz edildi:\n• 12 IT iş paketi çıkarıldı\n• 5 risk işaretlendi'); }
+function teamsSync() { alert('Teams entegrasyonu yakında!'); }
+
+// Uygulama başlat
+loadAllData().then(() => updateBadges());
 </script>
 </body>
 </html>
