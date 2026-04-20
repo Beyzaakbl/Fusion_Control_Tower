@@ -383,7 +383,8 @@ async function submitAddAction(phaseId) {
     title,
     description: document.getElementById('m-ac-desc').value,
     owner: document.getElementById('m-ac-owner').value,
-    due_date: document.getElementById('m-ac-due').value,
+    start_date: document.getElementById('m-ac-start').value || null,
+    due_date: document.getElementById('m-ac-due').value || null,
     priority: document.getElementById('m-ac-priority').value,
     status: document.getElementById('m-ac-status').value
   };
