@@ -124,11 +124,11 @@ async function createAction(data) {
 async function toggleAction(id) {
   const a = actions.find(x => x.id === id);
   if (!a) return;
-  const newStatus = a.status === 'done' ? 'open' : 'done';
+  const newStatus = a.status === 'done' ? 'todo' : 'done';
   const ok = await supabaseUpdate('actions', id, { status: newStatus });
   if (ok) {
     a.status = newStatus;
-    renderActions();
+    renderHierarchy();
     updateBadges();
   }
 }
