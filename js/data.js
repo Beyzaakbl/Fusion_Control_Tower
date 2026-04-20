@@ -53,7 +53,13 @@ function getProjectRisks(projectId) {
 }
 
 function getLateActions() {
-  return actions.filter(a => a.status === 'late');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  return actions.filter(a => {
+    if (a.status === 'done') return false;
+    if (!a.due_date) return false;
+    return new Date(a.due_date) < today;
+  });
 }
 
 function getActionCount() {
