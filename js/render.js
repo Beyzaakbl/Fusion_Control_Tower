@@ -350,9 +350,9 @@ function showAddActionModal(phaseId, projectId) {
       <div class="form-group"><label>Açıklama</label><textarea id="m-ac-desc" class="form-input" rows="2"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label>Sorumlu</label><input id="m-ac-owner" class="form-input" placeholder="Ad Soyad"></div>
-        <div class="form-group"><label>Termin</label><input id="m-ac-due" class="form-input" placeholder="Örn: 30 May"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Başlangıç Tarihi</label><input id="m-ac-start" type="date" class="form-input"></div>
+        <div class="form-group"><label>Bitiş / Termin Tarihi</label><input id="m-ac-due" type="date" class="form-input"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label>Öncelik</label>
           <select id="m-ac-priority" class="form-input">
             <option value="high">Yüksek</option>
