@@ -80,7 +80,7 @@ function renderDashboard() {
         <div class="action-title">${a.title}</div>
         <div class="action-footer">
           <span class="action-due late">⚠ ${a.due_date || '—'}</span>
-          <span style="font-size:11px;color:var(--text3)">${a.owner || '—'}</span>
+         <span style="font-size:11px;color:var(--text3)">${a.owner || 'Atanmamış'}</span>
         </div>
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Gecikmiş aksiyon yok ✓</div>';
