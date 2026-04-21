@@ -2,7 +2,8 @@
 let programs = [];
 let projects = [];
 let phases = [];
-let actions = [];
+let isPaketleri = [];
+let gorevler = [];
 let risks = [];
 let resources = [];
 
@@ -10,18 +11,20 @@ let resources = [];
 async function loadAllData() {
   try {
     showLoading(true);
-    const [pg, pr, ph, ac, ri, re] = await Promise.all([
+    const [pg, pr, ph, ip, gv, ri, re] = await Promise.all([
       supabaseFetch('programs'),
       supabaseFetch('projects'),
       supabaseFetch('phases'),
-      supabaseFetch('actions'),
+      supabaseFetch('is_paketleri'),
+      supabaseFetch('gorevler'),
       supabaseFetch('risks'),
       supabaseFetch('resources')
     ]);
     programs = pg;
     projects = pr;
     phases = ph;
-    actions = ac;
+    isPaketleri = ip;
+    gorevler = gv;
     risks = ri;
     resources = re;
     showLoading(false);
@@ -39,34 +42,45 @@ function getProjectPhases(projectId) {
                .sort((a, b) => a.order_num - b.order_num);
 }
 
-function getPhaseActions(phaseId) {
-  return actions.filter(a => a.phase_id === phaseId);
+function getPhaseIsPaketleri(phaseId) {
+  return isPaketleri.filter(ip => ip.phase_id === phaseId)
+                    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 }
 
-function getProjectActions(projectId) {
+function getIsPaketiGorevler(isPaketiId) {
+  return gorevler.filter(g => g.is_paketi_id === isPaketiId)
+                 .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+}
+
+function getProjectIsPaketleri(projectId) {
   const phaseIds = getProjectPhases(projectId).map(p => p.id);
-  return actions.filter(a => phaseIds.includes(a.phase_id));
+  return isPaketleri.filter(ip => phaseIds.includes(ip.phase_id));
+}
+
+function getProjectGorevler(projectId) {
+  const ipIds = getProjectIsPaketleri(projectId).map(ip => ip.id);
+  return gorevler.filter(g => ipIds.includes(g.is_paketi_id));
 }
 
 function getProjectRisks(projectId) {
   return risks.filter(r => r.project_id === projectId);
 }
 
-function getLateActions() {
+function getLateGorevler() {
   const today = new Date();
-  today.setHours(0,0,0,0);
-  return actions.filter(a => {
-    if (a.status === 'done') return false;
-    if (!a.due_date) return false;
-    return new Date(a.due_date) < today;
+  today.setHours(0, 0, 0, 0);
+  return gorevler.filter(g => {
+    if (g.status === 'done') return false;
+    if (!g.due_date) return false;
+    return new Date(g.due_date) < today;
   });
 }
 
-function getActionCount() {
-  return actions.length;
+function getLateActions() {
+  return getLateGorevler();
 }
 
-// ── CRUD FONKSİYONLARI ──
+// ── CRUD ──
 async function createProject(data) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/projects`, {
     method: 'POST',
@@ -79,10 +93,7 @@ async function createProject(data) {
     body: JSON.stringify(data)
   });
   const result = await res.json();
-  if (result[0]) {
-    projects.push(result[0]);
-    updateBadges();
-  }
+  if (result[0]) { projects.push(result[0]); updateBadges(); }
   return result[0];
 }
 
@@ -102,8 +113,8 @@ async function createPhase(data) {
   return result[0];
 }
 
-async function createAction(data) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/actions`, {
+async function createIsPaketi(data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/is_paketleri`, {
     method: 'POST',
     headers: {
       'apikey': SUPABASE_KEY,
@@ -114,20 +125,33 @@ async function createAction(data) {
     body: JSON.stringify(data)
   });
   const result = await res.json();
-  if (result[0]) {
-    actions.push(result[0]);
-    updateBadges();
-  }
+  if (result[0]) { isPaketleri.push(result[0]); updateBadges(); }
   return result[0];
 }
 
-async function toggleAction(id) {
-  const a = actions.find(x => x.id === id);
-  if (!a) return;
-  const newStatus = a.status === 'done' ? 'todo' : 'done';
-  const ok = await supabaseUpdate('actions', id, { status: newStatus });
+async function createGorev(data) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/gorevler`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (result[0]) { gorevler.push(result[0]); updateBadges(); }
+  return result[0];
+}
+
+async function toggleGorev(id) {
+  const g = gorevler.find(x => x.id === id);
+  if (!g) return;
+  const newStatus = g.status === 'done' ? 'todo' : 'done';
+  const ok = await supabaseUpdate('gorevler', id, { status: newStatus });
   if (ok) {
-    a.status = newStatus;
+    g.status = newStatus;
     renderHierarchy();
     updateBadges();
   }
