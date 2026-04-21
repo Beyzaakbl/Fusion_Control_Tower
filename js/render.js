@@ -29,7 +29,7 @@ function toast(msg, type = 'success') {
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
 }
 function formatDate(d) {
-  if (!d) return '—';
+  if (!d) return null;
   return new Date(d).toLocaleDateString('tr-TR', {day:'2-digit', month:'short', year:'numeric'});
 }
 
@@ -43,7 +43,6 @@ function updateBadges() {
   if (el('metric-late-badge')) el('metric-late-badge').textContent = late.length + ' geç';
   if (el('metric-projects')) el('metric-projects').textContent = projects.length;
   if (el('metric-packs')) el('metric-packs').textContent = isPaketleri.length;
-  if (el('metric-gorevler')) el('metric-gorevler').textContent = gorevler.length;
 
   const avgLoad = resources.length
     ? Math.round(resources.reduce((s, r) => s + r.load, 0) / resources.length) : 0;
@@ -60,7 +59,6 @@ function updateBadges() {
 function renderDashboard() {
   const late = getLateGorevler();
 
-  // Proje listesi
   const pl = document.getElementById('proj-list');
   if (pl) pl.innerHTML = projects.slice(0, 6).map(p => {
     const ipCount = getProjectIsPaketleri(p.id).length;
@@ -76,20 +74,18 @@ function renderDashboard() {
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Henüz proje yok</div></div>';
 
-  // Gecikmiş görevler
   const am = document.getElementById('action-mini');
   if (am) am.innerHTML = late.slice(0, 4).map(g => `
     <div class="action-item" onclick="showEditGorevModal('${g.id}')" style="cursor:pointer">
       <div class="action-body">
         <div class="action-title">${g.title}</div>
         <div class="action-footer">
-          <span class="action-due late">⚠ ${formatDate(g.due_date)}</span>
+          <span class="action-due late">⚠ ${formatDate(g.due_date)||'—'}</span>
           <span style="font-size:11px;color:var(--text3)">${g.owner || 'Atanmamış'}</span>
         </div>
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Gecikmiş görev yok ✓</div>';
 
-  // Risk mini
   const rm = document.getElementById('risk-mini');
   if (rm) rm.innerHTML = risks.filter(r => r.status !== 'Kapandı').slice(0, 4).map(r => `
     <div class="action-item">
@@ -100,7 +96,6 @@ function renderDashboard() {
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Açık risk yok ✓</div>';
 
-  // WS mini
   const wm = document.getElementById('ws-mini');
   if (wm) wm.innerHTML = `
     <div class="ws-card"><div class="ws-card-top">
@@ -131,17 +126,24 @@ function renderHierarchy() {
   const progProjects = [...projects].sort((a, b) => a.order_num - b.order_num);
 
   el.innerHTML = `
+    <!-- Program başlığı -->
     <div class="prog-header">
       <div class="prog-icon">F</div>
       <div class="prog-info">
         <div class="prog-name">${prog.name}</div>
-        <div class="prog-meta">${progProjects.length} proje · ${isPaketleri.length} iş paketi · ${gorevler.length} görev</div>
+        <div class="prog-meta">${progProjects.length} proje · ${phases.length} faz · ${isPaketleri.length} iş paketi · ${gorevler.length} görev</div>
       </div>
       <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="showAddProjectModal()">+ Proje Ekle</button>
     </div>
+
+    <!-- Projeler -->
     <div id="proj-hierarchy">
       ${progProjects.length ? progProjects.map(p => renderProjectCard(p)).join('') :
-        '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Henüz proje yok</div><button class="btn btn-primary" onclick="showAddProjectModal()">+ Proje Ekle</button></div>'}
+        `<div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <div class="empty-title">Henüz proje yok</div>
+          <button class="btn btn-primary" onclick="showAddProjectModal()">+ Proje Ekle</button>
+        </div>`}
     </div>`;
 }
 
@@ -151,33 +153,41 @@ function renderProjectCard(p) {
   const projGorevler = getProjectGorevler(p.id);
   const doneCount = projGorevler.filter(g => g.status === 'done').length;
   const progress = projGorevler.length ? Math.round((doneCount / projGorevler.length) * 100) : 0;
-  const progressColor = p.rag === 'green' ? 'var(--green)' : p.rag === 'amber' ? 'var(--amber)' : 'var(--red)';
+  const ragColor = p.rag === 'green' ? '#639922' : p.rag === 'amber' ? '#ba7517' : '#e24b4a';
 
   return `
-    <div class="proj-card" id="proj-card-${p.id}">
-      <div class="proj-card-header" onclick="toggleProjectCard('${p.id}')">
-        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
-          <div style="width:12px;height:12px;border-radius:50%;background:${p.rag==='green'?'#639922':p.rag==='amber'?'#ba7517':'#e24b4a'};flex-shrink:0"></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">
-              ${projPhases.length} faz · ${projIsPaketleri.length} iş paketi · ${projGorevler.length} görev · %${progress} tamamlandı
+    <div class="h-project-card">
+      <!-- Proje başlık satırı -->
+      <div class="h-project-header" onclick="toggleProjectCard('${p.id}')">
+        <div class="h-row-left">
+          <div class="h-project-dot" style="background:${ragColor}"></div>
+          <div>
+            <div class="h-project-title">${p.name}</div>
+            <div class="h-project-meta">
+              ${projPhases.length} faz · ${projIsPaketleri.length} iş paketi · 
+              ${projGorevler.length} görev · %${progress} tamamlandı
             </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <div class="h-row-right">
           ${pill(p.rag)}
           <button class="btn btn-sm" onclick="event.stopPropagation();showAddPhaseModal('${p.id}')">+ Faz</button>
-          <span class="phase-chevron open" id="proj-arr-${p.id}">▼</span>
+          <span class="h-chevron" id="proj-arr-${p.id}">▼</span>
         </div>
       </div>
-      <div style="padding:0 16px;background:var(--surface)">
-        <div class="progress"><div class="progress-fill" style="width:${progress}%;background:${progressColor}"></div></div>
+
+      <!-- Progress bar -->
+      <div class="h-progress-wrap">
+        <div class="progress">
+          <div class="progress-fill" style="width:${progress}%;background:${ragColor}"></div>
+        </div>
       </div>
-      <div class="proj-card-body" id="proj-body-${p.id}">
+
+      <!-- Fazlar -->
+      <div class="h-project-body" id="proj-body-${p.id}">
         ${projPhases.length ? projPhases.map(ph => renderPhaseBlock(ph, p)).join('') :
-          `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">
-            Henüz faz yok — <span style="color:var(--purple);cursor:pointer" onclick="showAddPhaseModal('${p.id}')">faz ekle</span>
+          `<div class="h-empty-hint">
+            Henüz faz yok — <span class="h-link" onclick="showAddPhaseModal('${p.id}')">faz ekle</span>
           </div>`}
       </div>
     </div>`;
@@ -189,27 +199,30 @@ function renderPhaseBlock(ph, project) {
   const doneCount = phGorevler.filter(g => g.status === 'done').length;
 
   return `
-    <div class="phase-block">
-      <div class="phase-block-header" onclick="togglePhaseBlock('${ph.id}')">
-        <div style="display:flex;align-items:center;gap:8px;flex:1">
-          <div style="width:3px;height:20px;border-radius:2px;background:var(--purple);flex-shrink:0"></div>
+    <div class="h-phase-block">
+      <!-- Faz başlık satırı -->
+      <div class="h-phase-header" onclick="togglePhaseBlock('${ph.id}')">
+        <div class="h-row-left">
+          <div class="h-phase-stripe"></div>
           <div>
-            <div style="font-size:12px;font-weight:600">${ph.name}</div>
-            <div style="font-size:10px;color:var(--text3)">
-              ${formatDate(ph.start_date)} → ${formatDate(ph.end_date)} · 
+            <div class="h-phase-title">${ph.name}</div>
+            <div class="h-phase-meta">
+              ${formatDate(ph.start_date) || '?'} → ${formatDate(ph.end_date) || '?'} · 
               ${phIsPaketleri.length} iş paketi · ${phGorevler.length} görev · ${doneCount} tamamlandı
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center">
+        <div class="h-row-right">
           <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showAddIsPaketiModal('${ph.id}','${project.id}')">+ İş Paketi</button>
-          <span style="color:var(--text3);font-size:11px" id="ph-arr-${ph.id}">▼</span>
+          <span class="h-chevron" id="ph-arr-${ph.id}">▼</span>
         </div>
       </div>
-      <div class="phase-block-body" id="ph-body-${ph.id}">
+
+      <!-- İş paketleri -->
+      <div class="h-phase-body" id="ph-body-${ph.id}">
         ${phIsPaketleri.length ? phIsPaketleri.map(ip => renderIsPaketiBlock(ip)).join('') :
-          `<div style="padding:12px 16px 12px 28px;font-size:11px;color:var(--text3)">
-            Henüz iş paketi yok — <span style="color:var(--purple);cursor:pointer" onclick="showAddIsPaketiModal('${ph.id}','${project.id}')">iş paketi ekle</span>
+          `<div class="h-empty-hint" style="padding-left:32px">
+            Henüz iş paketi yok — <span class="h-link" onclick="showAddIsPaketiModal('${ph.id}','${project.id}')">iş paketi ekle</span>
           </div>`}
       </div>
     </div>`;
@@ -221,31 +234,46 @@ function renderIsPaketiBlock(ip) {
   const progress = ipGorevler.length ? Math.round((doneCount / ipGorevler.length) * 100) : 0;
 
   return `
-    <div class="ip-block" id="ip-block-${ip.id}">
-      <div class="ip-block-header" onclick="toggleIsPaketiBlock('${ip.id}')">
-        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-          <div style="width:20px;height:20px;border-radius:4px;background:var(--purple-bg);color:var(--purple);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">İP</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ip.title}</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:1px">
-              ${ip.owner || 'Atanmamış'} · ${ipGorevler.length} görev · %${progress} tamamlandı
-              ${ip.due_date ? ' · ⏱ ' + formatDate(ip.due_date) : ''}
+    <div class="h-ip-block">
+      <!-- İş paketi başlık satırı -->
+      <div class="h-ip-header" onclick="toggleIsPaketiBlock('${ip.id}')">
+        <div class="h-row-left">
+          <div class="h-ip-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M3 6h6M3 4h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="h-ip-title">${ip.title}</div>
+            <div class="h-ip-meta">
+              ${ip.owner ? `<span>${ip.owner}</span>` : '<span style="color:var(--text3);font-style:italic">Atanmamış</span>'}
+              ${ip.due_date ? `· <span>⏱ ${formatDate(ip.due_date)}</span>` : ''}
+              · <span>${ipGorevler.length} görev · %${progress} tamamlandı</span>
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        <div class="h-row-right">
           ${statusPill(ip.status)}
           ${priorityPill(ip.priority)}
-          <button class="btn btn-sm" onclick="event.stopPropagation();showEditIsPaketiModal('${ip.id}')">✏️</button>
           <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showAddGorevModal('${ip.id}')">+ Görev</button>
-          <button class="btn btn-sm" style="color:var(--red-mid);border-color:transparent;background:transparent" onclick="event.stopPropagation();deleteIsPaketi('${ip.id}')">✕</button>
-          <span style="color:var(--text3);font-size:11px" id="ip-arr-${ip.id}">▼</span>
+          <div class="h-actions">
+            <button class="h-action-btn" onclick="event.stopPropagation();showEditIsPaketiModal('${ip.id}')" title="Düzenle">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="h-action-btn h-action-delete" onclick="event.stopPropagation();deleteIsPaketi('${ip.id}')" title="Sil">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2l7 7M9 2l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <span class="h-chevron" id="ip-arr-${ip.id}">▼</span>
         </div>
       </div>
-      <div class="ip-block-body" id="ip-body-${ip.id}">
+
+      <!-- Görevler -->
+      <div class="h-ip-body" id="ip-body-${ip.id}">
         ${ipGorevler.length ? ipGorevler.map(g => renderGorevRow(g)).join('') :
-          `<div style="padding:10px 16px 10px 44px;font-size:11px;color:var(--text3)">
-            Henüz görev yok — <span style="color:var(--purple);cursor:pointer" onclick="showAddGorevModal('${ip.id}')">görev ekle</span>
+          `<div class="h-empty-hint" style="padding-left:56px">
+            Henüz görev yok — <span class="h-link" onclick="showAddGorevModal('${ip.id}')">görev ekle</span>
           </div>`}
       </div>
     </div>`;
@@ -254,23 +282,31 @@ function renderIsPaketiBlock(ip) {
 function renderGorevRow(g) {
   const done = g.status === 'done';
   const late = g.status !== 'done' && g.due_date && new Date(g.due_date) < new Date();
+
   return `
-    <div class="gorev-row" id="gorev-row-${g.id}">
-      <div class="check-box ${done?'done':''}" onclick="toggleGorev('${g.id}')">
-        ${done?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 4.5l2 2 3-3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
-      </div>
-      <div class="action-body">
-        <div class="action-title ${done?'done':''}">${g.title}</div>
-        <div class="action-footer">
-          ${statusPill(g.status)}
-          ${priorityPill(g.priority)}
-          ${g.due_date ? `<span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${formatDate(g.due_date)}</span>` : ''}
-          <span style="font-size:11px;color:var(--text3)">${g.owner || 'Atanmamış'}</span>
+    <div class="h-gorev-row ${done?'h-gorev-done':''}" id="gorev-row-${g.id}">
+      <div class="h-row-left">
+        <div class="h-gorev-indent"></div>
+        <div class="check-box ${done?'done':''}" onclick="toggleGorev('${g.id}')">
+          ${done?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 4.5l2 2 3-3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+        </div>
+        <div>
+          <div class="h-gorev-title ${done?'done':''}">${g.title}</div>
+          <div class="h-gorev-meta">
+            ${statusPill(g.status)}
+            ${priorityPill(g.priority)}
+            ${g.due_date ? `<span class="action-due ${late?'late':'ok'} ml-4">${late?'⚠ ':''}${formatDate(g.due_date)}</span>` : ''}
+            <span style="font-size:11px;color:var(--text3)">${g.owner || 'Atanmamış'}</span>
+          </div>
         </div>
       </div>
-      <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn btn-sm" onclick="showEditGorevModal('${g.id}')">✏️</button>
-        <button class="btn btn-sm" style="color:var(--red-mid);border-color:transparent;background:transparent" onclick="deleteGorevRow('${g.id}')">✕</button>
+      <div class="h-actions">
+        <button class="h-action-btn" onclick="showEditGorevModal('${g.id}')" title="Düzenle">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="h-action-btn h-action-delete" onclick="deleteGorevRow('${g.id}')" title="Sil">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 2l7 7M9 2l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
       </div>
     </div>`;
 }
@@ -329,7 +365,7 @@ function showAddProjectModal() {
       <div class="form-group"><label>Durum</label>
         <select id="m-proj-rag" class="form-input">
           <option value="green">Yolunda</option>
-          <option value="amber">Dikkat</option>
+          <option value="amber" selected>Dikkat</option>
           <option value="red">Kritik</option>
         </select>
       </div>
@@ -408,7 +444,7 @@ function showAddIsPaketiModal(phaseId, projectId) {
       </div>
       <div class="form-group"><label>Durum</label>
         <select id="m-ip-status" class="form-input">
-          <option value="todo">To Do</option>
+          <option value="todo" selected>To Do</option>
           <option value="inprogress">In Progress</option>
           <option value="done">Done</option>
         </select>
@@ -527,7 +563,7 @@ function showAddGorevModal(isPaketiId) {
       </div>
       <div class="form-group"><label>Durum</label>
         <select id="m-gv-status" class="form-input">
-          <option value="todo">To Do</option>
+          <option value="todo" selected>To Do</option>
           <option value="inprogress">In Progress</option>
           <option value="done">Done</option>
         </select>
@@ -656,7 +692,9 @@ function renderActions() {
           <span style="font-size:11px;color:var(--text3)">${g.owner||'Atanmamış'}</span>
         </div>
       </div>
-      <button class="btn btn-sm" onclick="showEditGorevModal('${g.id}')">✏️</button>
+      <button class="h-action-btn" onclick="showEditGorevModal('${g.id}')">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9 2l2 2-7 7H2V9l7-7z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      </button>
     </div>`;
   }).join('');
 }
@@ -721,7 +759,7 @@ function renderRoadmap() {
         <div class="phase-stripe" style="background:${ph.col}"></div>
         <div class="phase-meta"><div class="phase-title">${ph.title}</div><div class="phase-timeframe">${ph.tf}</div></div>
         <span class="phase-count">${ph.items.length} iş paketi</span>
-        <span class="phase-chevron open" id="ph-arr-${i}">▼</span>
+        <span class="phase-chevron open" id="rm-arr-${i}">▼</span>
       </div>
       <div class="phase-body" id="ph-body-r-${i}">
         ${ph.items.map(it => `
@@ -738,7 +776,7 @@ function renderRoadmap() {
 }
 function togglePhase(i) {
   const b = document.getElementById('ph-body-r-' + i);
-  const a = document.getElementById('ph-arr-' + i);
+  const a = document.getElementById('rm-arr-' + i);
   if (!b) return;
   const open = b.style.display !== 'none';
   b.style.display = open ? 'none' : 'block';
