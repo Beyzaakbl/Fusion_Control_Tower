@@ -75,8 +75,7 @@ function renderDashboard() {
   // Gecikmiş aksiyonlar
   const am = document.getElementById('action-mini');
   if (am) am.innerHTML = late.slice(0, 4).map(a => `
-    <div class="action-item">
-      <div class="check-box"></div>
+    <div class="action-item" onclick="showEditActionModal('${a.id}')" style="cursor:pointer">
       <div class="action-body">
         <div class="action-title">${a.title}</div>
         <div class="action-footer">
@@ -85,7 +84,7 @@ function renderDashboard() {
         </div>
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Gecikmiş aksiyon yok ✓</div>';
-
+  
   // Risk mini
   const rm = document.getElementById('risk-mini');
   if (rm) rm.innerHTML = risks.filter(r => r.status !== 'Kapandı').slice(0, 4).map(r => `
