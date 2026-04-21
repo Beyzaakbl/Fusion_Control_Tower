@@ -1,4 +1,4 @@
-let actionFilter = 'all';
+let gorevFilter = 'all';
 let projFilterVal = 'all';
 
 // ── YARDIMCI ──
@@ -21,31 +21,35 @@ function statusPill(s) {
   if (s === 'inprogress') return '<span class="pill pill-blue">In Progress</span>';
   return '<span class="pill pill-gray">To Do</span>';
 }
-function toast(msg, type='success') {
+function toast(msg, type = 'success') {
   const el = document.createElement('div');
-  el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:${type==='success'?'#3b6d11':'#a32d2d'};box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s`;
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:${type === 'success' ? '#3b6d11' : '#a32d2d'};box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s`;
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
 }
+function formatDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', {day:'2-digit', month:'short', year:'numeric'});
+}
 
 // ── BADGES ──
 function updateBadges() {
-  const late = getLateActions();
+  const late = getLateGorevler();
   const el = id => document.getElementById(id);
   if (el('badge-projects')) el('badge-projects').textContent = projects.length;
   if (el('badge-actions')) el('badge-actions').textContent = late.length;
   if (el('urgency-count')) el('urgency-count').textContent = late.length;
   if (el('metric-late-badge')) el('metric-late-badge').textContent = late.length + ' geç';
   if (el('metric-projects')) el('metric-projects').textContent = projects.length;
-  if (el('metric-packs')) el('metric-packs').textContent = actions.length;
+  if (el('metric-packs')) el('metric-packs').textContent = isPaketleri.length;
+  if (el('metric-gorevler')) el('metric-gorevler').textContent = gorevler.length;
 
   const avgLoad = resources.length
     ? Math.round(resources.reduce((s, r) => s + r.load, 0) / resources.length) : 0;
   if (el('metric-load')) el('metric-load').textContent = avgLoad + '%';
-
-  const overloaded = resources.filter(r => r.load > 85).map(r => r.name).join(' & ');
-  if (el('metric-load-sub')) el('metric-load-sub').textContent = overloaded ? overloaded + ' aşırı yüklü' : 'Kapasite normal';
+  if (el('metric-load-sub')) el('metric-load-sub').textContent =
+    resources.filter(r => r.load > 85).map(r => r.name).join(' & ') || 'Kapasite normal';
 
   const riskProj = projects.filter(p => p.rag !== 'green').length;
   if (el('metric-projects-sub')) el('metric-projects-sub').textContent =
@@ -54,37 +58,37 @@ function updateBadges() {
 
 // ── DASHBOARD ──
 function renderDashboard() {
-  const late = getLateActions();
+  const late = getLateGorevler();
 
   // Proje listesi
   const pl = document.getElementById('proj-list');
   if (pl) pl.innerHTML = projects.slice(0, 6).map(p => {
-    const phCount = getProjectPhases(p.id).length;
-    const acCount = getProjectActions(p.id).length;
-    return `<div class="proj-item" onclick="openProject('${p.id}')">
+    const ipCount = getProjectIsPaketleri(p.id).length;
+    const gvCount = getProjectGorevler(p.id).length;
+    return `<div class="proj-item" onclick="navigate('hierarchy',null)" style="cursor:pointer">
       <div class="proj-dot" style="background:${p.rag==='green'?'#639922':p.rag==='amber'?'#ba7517':'#e24b4a'}"></div>
       <div class="proj-info">
         <div class="proj-name">${p.name}</div>
-        <div class="proj-meta">${phCount} faz · ${acCount} aksiyon</div>
+        <div class="proj-meta">${ipCount} iş paketi · ${gvCount} görev</div>
       </div>
       ${pill(p.rag)}
-      <div class="proj-packs"><div class="proj-packs-num">${phCount}</div><div class="proj-packs-label">faz</div></div>
+      <div class="proj-packs"><div class="proj-packs-num">${ipCount}</div><div class="proj-packs-label">paket</div></div>
     </div>`;
   }).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Henüz proje yok</div></div>';
 
-  // Gecikmiş aksiyonlar
+  // Gecikmiş görevler
   const am = document.getElementById('action-mini');
-  if (am) am.innerHTML = late.slice(0, 4).map(a => `
-    <div class="action-item" onclick="showEditActionModal('${a.id}')" style="cursor:pointer">
+  if (am) am.innerHTML = late.slice(0, 4).map(g => `
+    <div class="action-item" onclick="showEditGorevModal('${g.id}')" style="cursor:pointer">
       <div class="action-body">
-        <div class="action-title">${a.title}</div>
+        <div class="action-title">${g.title}</div>
         <div class="action-footer">
-          <span class="action-due late">⚠ ${a.due_date || '—'}</span>
-         <span style="font-size:11px;color:var(--text3)">${a.owner || 'Atanmamış'}</span>
+          <span class="action-due late">⚠ ${formatDate(g.due_date)}</span>
+          <span style="font-size:11px;color:var(--text3)">${g.owner || 'Atanmamış'}</span>
         </div>
       </div>
-    </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Gecikmiş aksiyon yok ✓</div>';
-  
+    </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Gecikmiş görev yok ✓</div>';
+
   // Risk mini
   const rm = document.getElementById('risk-mini');
   if (rm) rm.innerHTML = risks.filter(r => r.status !== 'Kapandı').slice(0, 4).map(r => `
@@ -101,17 +105,19 @@ function renderDashboard() {
   if (wm) wm.innerHTML = `
     <div class="ws-card"><div class="ws-card-top">
       <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div></div>
-      <div class="ws-info"><div class="ws-title">YÜG Vizyon Çalıştayı #1</div><div class="ws-sub">Tamamlandı · AI Analiz Edildi</div>
+      <div class="ws-info"><div class="ws-title">YÜG Vizyon Çalıştayı #1</div>
+      <div class="ws-sub">08 Nis 2026 · Tamamlandı · AI Analiz Edildi</div>
       <div style="display:flex;gap:4px;margin-top:5px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Aktif</span></div></div>
     </div></div>
     <div class="ws-card" style="border-bottom:none"><div class="ws-card-top">
       <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">15</div></div>
-      <div class="ws-info"><div class="ws-title">YÜG + P2P Haftalık</div><div class="ws-sub">Yarın · 10:00 ve 14:00</div>
+      <div class="ws-info"><div class="ws-title">YÜG + P2P Haftalık</div>
+      <div class="ws-sub">15 Nis 2026 · 10:00 – 14:00</div>
       <div style="margin-top:5px"><span class="pill pill-amber">Yaklaşan</span></div></div>
     </div></div>`;
 }
 
-// ── PROGRAM HİYERARŞİ SAYFASI ──
+// ── PROGRAM HİYERARŞİSİ ──
 function renderHierarchy() {
   const el = document.getElementById('hierarchy-body');
   if (!el) return;
@@ -122,40 +128,41 @@ function renderHierarchy() {
     return;
   }
 
-  const progProjects = projects.sort((a, b) => a.order_num - b.order_num);
+  const progProjects = [...projects].sort((a, b) => a.order_num - b.order_num);
 
   el.innerHTML = `
-    <!-- Program Başlığı -->
     <div class="prog-header">
       <div class="prog-icon">F</div>
       <div class="prog-info">
         <div class="prog-name">${prog.name}</div>
-        <div class="prog-meta">${progProjects.length} proje · ${phases.length} faz · ${actions.length} aksiyon</div>
+        <div class="prog-meta">${progProjects.length} proje · ${isPaketleri.length} iş paketi · ${gorevler.length} görev</div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="showAddProjectModal()">+ Proje Ekle</button>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="showAddProjectModal()">+ Proje Ekle</button>
     </div>
-
-    <!-- Projeler -->
     <div id="proj-hierarchy">
       ${progProjects.length ? progProjects.map(p => renderProjectCard(p)).join('') :
-        '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Henüz proje yok</div><div class="empty-text">Başlamak için proje ekleyin.</div><button class="btn btn-primary" onclick="showAddProjectModal()">+ Proje Ekle</button></div>'}
+        '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Henüz proje yok</div><button class="btn btn-primary" onclick="showAddProjectModal()">+ Proje Ekle</button></div>'}
     </div>`;
 }
 
 function renderProjectCard(p) {
   const projPhases = getProjectPhases(p.id);
-  const projActions = getProjectActions(p.id);
-  const doneCount = projActions.filter(a => a.status === 'done').length;
-  const progress = projActions.length ? Math.round((doneCount / projActions.length) * 100) : 0;
+  const projIsPaketleri = getProjectIsPaketleri(p.id);
+  const projGorevler = getProjectGorevler(p.id);
+  const doneCount = projGorevler.filter(g => g.status === 'done').length;
+  const progress = projGorevler.length ? Math.round((doneCount / projGorevler.length) * 100) : 0;
+  const progressColor = p.rag === 'green' ? 'var(--green)' : p.rag === 'amber' ? 'var(--amber)' : 'var(--red)';
 
   return `
     <div class="proj-card" id="proj-card-${p.id}">
       <div class="proj-card-header" onclick="toggleProjectCard('${p.id}')">
         <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
-          <div class="proj-dot" style="width:12px;height:12px;border-radius:50%;background:${p.rag==='green'?'#639922':p.rag==='amber'?'#ba7517':'#e24b4a'};flex-shrink:0"></div>
+          <div style="width:12px;height:12px;border-radius:50%;background:${p.rag==='green'?'#639922':p.rag==='amber'?'#ba7517':'#e24b4a'};flex-shrink:0"></div>
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">${projPhases.length} faz · ${projActions.length} aksiyon · %${progress} tamamlandı</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">
+              ${projPhases.length} faz · ${projIsPaketleri.length} iş paketi · ${projGorevler.length} görev · %${progress} tamamlandı
+            </div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
@@ -164,13 +171,9 @@ function renderProjectCard(p) {
           <span class="phase-chevron open" id="proj-arr-${p.id}">▼</span>
         </div>
       </div>
-
-      <!-- Progress bar -->
-      <div style="padding:0 16px 0;background:var(--surface)">
-        <div class="progress"><div class="progress-fill" style="width:${progress}%;background:${p.rag==='green'?'var(--green)':p.rag==='amber'?'var(--amber)':'var(--red)'}"></div></div>
+      <div style="padding:0 16px;background:var(--surface)">
+        <div class="progress"><div class="progress-fill" style="width:${progress}%;background:${progressColor}"></div></div>
       </div>
-
-      <!-- Fazlar -->
       <div class="proj-card-body" id="proj-body-${p.id}">
         ${projPhases.length ? projPhases.map(ph => renderPhaseBlock(ph, p)).join('') :
           `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">
@@ -181,8 +184,9 @@ function renderProjectCard(p) {
 }
 
 function renderPhaseBlock(ph, project) {
-  const phActions = getPhaseActions(ph.id);
-  const doneCount = phActions.filter(a => a.status === 'done').length;
+  const phIsPaketleri = getPhaseIsPaketleri(ph.id);
+  const phGorevler = phIsPaketleri.flatMap(ip => getIsPaketiGorevler(ip.id));
+  const doneCount = phGorevler.filter(g => g.status === 'done').length;
 
   return `
     <div class="phase-block">
@@ -191,48 +195,87 @@ function renderPhaseBlock(ph, project) {
           <div style="width:3px;height:20px;border-radius:2px;background:var(--purple);flex-shrink:0"></div>
           <div>
             <div style="font-size:12px;font-weight:600">${ph.name}</div>
-            <div style="font-size:10px;color:var(--text3)">${ph.start_date||'?'} → ${ph.end_date||'?'} · ${phActions.length} aksiyon · ${doneCount} tamamlandı</div>
+            <div style="font-size:10px;color:var(--text3)">
+              ${formatDate(ph.start_date)} → ${formatDate(ph.end_date)} · 
+              ${phIsPaketleri.length} iş paketi · ${phGorevler.length} görev · ${doneCount} tamamlandı
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showAddActionModal('${ph.id}','${project.id}')">+ Aksiyon</button>
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showAddIsPaketiModal('${ph.id}','${project.id}')">+ İş Paketi</button>
           <span style="color:var(--text3);font-size:11px" id="ph-arr-${ph.id}">▼</span>
         </div>
       </div>
-
       <div class="phase-block-body" id="ph-body-${ph.id}">
-        ${phActions.length ? phActions.map(a => renderActionRow(a)).join('') :
-          `<div style="padding:12px 16px;font-size:11px;color:var(--text3)">
-            Henüz aksiyon yok — <span style="color:var(--purple);cursor:pointer" onclick="showAddActionModal('${ph.id}','${project.id}')">aksiyon ekle</span>
+        ${phIsPaketleri.length ? phIsPaketleri.map(ip => renderIsPaketiBlock(ip)).join('') :
+          `<div style="padding:12px 16px 12px 28px;font-size:11px;color:var(--text3)">
+            Henüz iş paketi yok — <span style="color:var(--purple);cursor:pointer" onclick="showAddIsPaketiModal('${ph.id}','${project.id}')">iş paketi ekle</span>
           </div>`}
       </div>
     </div>`;
 }
 
-function renderActionRow(a) {
-  const done = a.status === 'done', late = a.status === 'late';
+function renderIsPaketiBlock(ip) {
+  const ipGorevler = getIsPaketiGorevler(ip.id);
+  const doneCount = ipGorevler.filter(g => g.status === 'done').length;
+  const progress = ipGorevler.length ? Math.round((doneCount / ipGorevler.length) * 100) : 0;
+
   return `
-    <div class="action-row" id="action-row-${a.id}">
-      <div class="check-box ${done?'done':''}">
-        ${done?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 4.5l2 2 3-3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
-      </div>
-      <div class="action-body">
-        <div class="action-title ${done?'done':''}">${a.title}</div>
-        <div class="action-footer">
-          ${a.priority ? priorityPill(a.priority) : ''}
-          ${statusPill(a.status)}
-          <span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${a.due_date||''}</span>
-          <span style="font-size:11px;color:var(--text3)">${a.owner||''}</span>
+    <div class="ip-block" id="ip-block-${ip.id}">
+      <div class="ip-block-header" onclick="toggleIsPaketiBlock('${ip.id}')">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+          <div style="width:20px;height:20px;border-radius:4px;background:var(--purple-bg);color:var(--purple);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">İP</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ip.title}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:1px">
+              ${ip.owner || 'Atanmamış'} · ${ipGorevler.length} görev · %${progress} tamamlandı
+              ${ip.due_date ? ' · ⏱ ' + formatDate(ip.due_date) : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+          ${statusPill(ip.status)}
+          ${priorityPill(ip.priority)}
+          <button class="btn btn-sm" onclick="event.stopPropagation();showEditIsPaketiModal('${ip.id}')">✏️</button>
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showAddGorevModal('${ip.id}')">+ Görev</button>
+          <button class="btn btn-sm" style="color:var(--red-mid);border-color:transparent;background:transparent" onclick="event.stopPropagation();deleteIsPaketi('${ip.id}')">✕</button>
+          <span style="color:var(--text3);font-size:11px" id="ip-arr-${ip.id}">▼</span>
         </div>
       </div>
-      <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn btn-sm" onclick="showEditActionModal('${a.id}')">✏️</button>
-        <button class="btn btn-sm" style="color:var(--red-mid);border-color:transparent;background:transparent" 
-          onclick="deleteActionRow('${a.id}')">✕</button>
+      <div class="ip-block-body" id="ip-body-${ip.id}">
+        ${ipGorevler.length ? ipGorevler.map(g => renderGorevRow(g)).join('') :
+          `<div style="padding:10px 16px 10px 44px;font-size:11px;color:var(--text3)">
+            Henüz görev yok — <span style="color:var(--purple);cursor:pointer" onclick="showAddGorevModal('${ip.id}')">görev ekle</span>
+          </div>`}
       </div>
     </div>`;
 }
-// ── TOGGLE FONKSİYONLARI ──
+
+function renderGorevRow(g) {
+  const done = g.status === 'done';
+  const late = g.status !== 'done' && g.due_date && new Date(g.due_date) < new Date();
+  return `
+    <div class="gorev-row" id="gorev-row-${g.id}">
+      <div class="check-box ${done?'done':''}" onclick="toggleGorev('${g.id}')">
+        ${done?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 4.5l2 2 3-3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+      </div>
+      <div class="action-body">
+        <div class="action-title ${done?'done':''}">${g.title}</div>
+        <div class="action-footer">
+          ${statusPill(g.status)}
+          ${priorityPill(g.priority)}
+          ${g.due_date ? `<span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${formatDate(g.due_date)}</span>` : ''}
+          <span style="font-size:11px;color:var(--text3)">${g.owner || 'Atanmamış'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-sm" onclick="showEditGorevModal('${g.id}')">✏️</button>
+        <button class="btn btn-sm" style="color:var(--red-mid);border-color:transparent;background:transparent" onclick="deleteGorevRow('${g.id}')">✕</button>
+      </div>
+    </div>`;
+}
+
+// ── TOGGLE ──
 function toggleProjectCard(id) {
   const body = document.getElementById('proj-body-' + id);
   const arr = document.getElementById('proj-arr-' + id);
@@ -241,7 +284,6 @@ function toggleProjectCard(id) {
   body.style.display = open ? 'none' : 'block';
   if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
 }
-
 function togglePhaseBlock(id) {
   const body = document.getElementById('ph-body-' + id);
   const arr = document.getElementById('ph-arr-' + id);
@@ -250,8 +292,16 @@ function togglePhaseBlock(id) {
   body.style.display = open ? 'none' : 'block';
   if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
 }
+function toggleIsPaketiBlock(id) {
+  const body = document.getElementById('ip-body-' + id);
+  const arr = document.getElementById('ip-arr-' + id);
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
+}
 
-// ── MODAL'LAR ──
+// ── MODAL ──
 function showModal(html) {
   let overlay = document.getElementById('modal-overlay');
   if (!overlay) {
@@ -264,18 +314,18 @@ function showModal(html) {
   overlay.innerHTML = `<div class="modal-box">${html}</div>`;
   overlay.style.display = 'flex';
 }
-
 function closeModal() {
   const o = document.getElementById('modal-overlay');
   if (o) o.style.display = 'none';
 }
 
+// ── PROJE MODAL ──
 function showAddProjectModal() {
   showModal(`
-    <div class="modal-header"><span class="modal-title">Yeni Proje Ekle</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div class="modal-header"><span class="modal-title">Yeni Proje</span><span class="modal-close" onclick="closeModal()">✕</span></div>
     <div class="modal-body">
       <div class="form-group"><label>Proje Adı *</label><input id="m-proj-name" class="form-input" placeholder="Örn: Yeni Ürün Geliştirme"></div>
-      <div class="form-group"><label>Açıklama</label><textarea id="m-proj-desc" class="form-input" rows="2" placeholder="Kısa açıklama..."></textarea></div>
+      <div class="form-group"><label>Açıklama</label><textarea id="m-proj-desc" class="form-input" rows="2"></textarea></div>
       <div class="form-group"><label>Durum</label>
         <select id="m-proj-rag" class="form-input">
           <option value="green">Yolunda</option>
@@ -289,31 +339,24 @@ function showAddProjectModal() {
       <button class="btn btn-primary" onclick="submitAddProject()">Kaydet</button>
     </div>`);
 }
-
 async function submitAddProject() {
   const name = document.getElementById('m-proj-name').value.trim();
   if (!name) { toast('Proje adı zorunlu', 'error'); return; }
-  const prog = programs[0];
-  if (!prog) return;
-  const data = {
-    program_id: prog.id,
+  const result = await createProject({
+    program_id: programs[0]?.id,
     name,
     description: document.getElementById('m-proj-desc').value,
     rag: document.getElementById('m-proj-rag').value,
     order_num: projects.length + 1
-  };
-  const result = await createProject(data);
-  if (result) {
-    toast('Proje eklendi ✓');
-    closeModal();
-    renderHierarchy();
-  }
+  });
+  if (result) { toast('Proje eklendi ✓'); closeModal(); renderHierarchy(); }
 }
 
+// ── FAZ MODAL ──
 function showAddPhaseModal(projectId) {
-  const project = projects.find(p => p.id === projectId);
+  const p = projects.find(x => x.id === projectId);
   showModal(`
-    <div class="modal-header"><span class="modal-title">Faz Ekle — ${project?.name||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div class="modal-header"><span class="modal-title">Faz Ekle — ${p?.name||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
     <div class="modal-body">
       <div class="form-group"><label>Faz Adı *</label><input id="m-ph-name" class="form-input" placeholder="Örn: Faz 1 — Vizyon & Temel Altyapı"></div>
       <div class="form-group"><label>Açıklama</label><textarea id="m-ph-desc" class="form-input" rows="2"></textarea></div>
@@ -327,239 +370,299 @@ function showAddPhaseModal(projectId) {
       <button class="btn btn-primary" onclick="submitAddPhase('${projectId}')">Kaydet</button>
     </div>`);
 }
-
 async function submitAddPhase(projectId) {
   const name = document.getElementById('m-ph-name').value.trim();
   if (!name) { toast('Faz adı zorunlu', 'error'); return; }
-  const existingPhases = getProjectPhases(projectId);
-  const data = {
+  const result = await createPhase({
     project_id: projectId,
     name,
     description: document.getElementById('m-ph-desc').value,
     start_date: document.getElementById('m-ph-start').value || null,
     end_date: document.getElementById('m-ph-end').value || null,
-    order_num: existingPhases.length + 1
-  };
-  const result = await createPhase(data);
-  if (result) {
-    toast('Faz eklendi ✓');
-    closeModal();
-    renderHierarchy();
-  }
+    order_num: getProjectPhases(projectId).length + 1
+  });
+  if (result) { toast('Faz eklendi ✓'); closeModal(); renderHierarchy(); }
 }
 
-function showAddActionModal(phaseId, projectId) {
-  const phase = phases.find(p => p.id === phaseId);
+// ── İŞ PAKETİ MODAL ──
+function showAddIsPaketiModal(phaseId, projectId) {
+  const ph = phases.find(x => x.id === phaseId);
   showModal(`
-    <div class="modal-header"><span class="modal-title">Aksiyon Ekle — ${phase?.name||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div class="modal-header"><span class="modal-title">İş Paketi Ekle — ${ph?.name||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
     <div class="modal-body">
-      <div class="form-group"><label>Aksiyon Başlığı *</label><input id="m-ac-title" class="form-input" placeholder="Aksiyon açıklaması..."></div>
-      <div class="form-group"><label>Açıklama</label><textarea id="m-ac-desc" class="form-input" rows="2"></textarea></div>
+      <div class="form-group"><label>İş Paketi Adı *</label><input id="m-ip-title" class="form-input" placeholder="Örn: PLM Aracı Değerlendirme"></div>
+      <div class="form-group"><label>Açıklama</label><textarea id="m-ip-desc" class="form-input" rows="2"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label>Sorumlu</label><input id="m-ac-owner" class="form-input" placeholder="Ad Soyad"></div>
-        <div class="form-group"><label>Başlangıç Tarihi</label><input id="m-ac-start" type="date" class="form-input"></div>
-        <div class="form-group"><label>Bitiş / Termin Tarihi</label><input id="m-ac-due" type="date" class="form-input"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Sorumlu</label><input id="m-ip-owner" class="form-input" placeholder="Ad Soyad"></div>
         <div class="form-group"><label>Öncelik</label>
-          <select id="m-ac-priority" class="form-input">
+          <select id="m-ip-priority" class="form-input">
             <option value="high">Yüksek</option>
             <option value="medium" selected>Orta</option>
             <option value="low">Düşük</option>
           </select>
         </div>
-        <div class="form-group"><label>Durum</label>
-          <select id="m-ac-status" class="form-input">
-            <option value="open">Açık</option>
-            <option value="late">Gecikmiş</option>
-            <option value="done">Tamamlandı</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="submitAddAction('${phaseId}')">Kaydet</button>
-    </div>`);
-}
-
-async function submitAddAction(phaseId) {
-  const title = document.getElementById('m-ac-title').value.trim();
-  if (!title) { toast('Aksiyon başlığı zorunlu', 'error'); return; }
-  const data = {
-    phase_id: phaseId,
-    title,
-    description: document.getElementById('m-ac-desc').value,
-    owner: document.getElementById('m-ac-owner').value,
-    start_date: document.getElementById('m-ac-start').value || null,
-    due_date: document.getElementById('m-ac-due').value || null,
-    priority: document.getElementById('m-ac-priority').value,
-    status: document.getElementById('m-ac-status').value
-  };
-  const result = await createAction(data);
-  if (result) {
-    toast('Aksiyon eklendi ✓');
-    closeModal();
-    renderHierarchy();
-  }
-}
-
-async function deleteActionRow(id) {
-  if (!confirm('Bu aksiyonu silmek istediğinizden emin misiniz?')) return;
-  const ok = await deleteItem('actions', id);
-  if (ok) {
-    actions = actions.filter(a => a.id !== id);
-    toast('Aksiyon silindi');
-    renderHierarchy();
-    updateBadges();
-  }
-}
-function showEditActionModal(id) {
-  const a = actions.find(x => x.id === id);
-  if (!a) return;
-  showModal(`
-    <div class="modal-header">
-      <span class="modal-title">Aksiyonu Düzenle</span>
-      <span class="modal-close" onclick="closeModal()">✕</span>
-    </div>
-    <div class="modal-body">
-      <div class="form-group"><label>Aksiyon Başlığı *</label>
-        <input id="m-edit-title" class="form-input" value="${a.title}">
-      </div>
-      <div class="form-group"><label>Açıklama</label>
-        <textarea id="m-edit-desc" class="form-input" rows="2">${a.description||''}</textarea>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label>Sorumlu</label>
-          <input id="m-edit-owner" class="form-input" value="${a.owner||''}">
-        </div>
-        <div class="form-group"><label>Öncelik</label>
-          <select id="m-edit-priority" class="form-input">
-            <option value="high" ${a.priority==='high'?'selected':''}>Yüksek</option>
-            <option value="medium" ${a.priority==='medium'?'selected':''}>Orta</option>
-            <option value="low" ${a.priority==='low'?'selected':''}>Düşük</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Başlangıç</label><input id="m-ip-start" type="date" class="form-input"></div>
+        <div class="form-group"><label>Bitiş</label><input id="m-ip-due" type="date" class="form-input"></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label>Başlangıç Tarihi</label>
-          <input id="m-edit-start" type="date" class="form-input" value="${a.start_date||''}">
-        </div>
-        <div class="form-group"><label>Bitiş / Termin</label>
-          <input id="m-edit-due" type="date" class="form-input" value="${a.due_date||''}">
-        </div>
-      </div>
-    <div class="form-group"><label>Durum</label>
-        <select id="m-edit-status" class="form-input">
-          <option value="todo" ${a.status==='todo'?'selected':''}>To Do</option>
-          <option value="inprogress" ${a.status==='inprogress'?'selected':''}>In Progress</option>
-          <option value="done" ${a.status==='done'?'selected':''}>Done</option>
+      <div class="form-group"><label>Durum</label>
+        <select id="m-ip-status" class="form-input">
+          <option value="todo">To Do</option>
+          <option value="inprogress">In Progress</option>
+          <option value="done">Done</option>
         </select>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="submitEditAction('${id}')">Kaydet</button>
+      <button class="btn btn-primary" onclick="submitAddIsPaketi('${phaseId}')">Kaydet</button>
     </div>`);
 }
+async function submitAddIsPaketi(phaseId) {
+  const title = document.getElementById('m-ip-title').value.trim();
+  if (!title) { toast('İş paketi adı zorunlu', 'error'); return; }
+  const result = await createIsPaketi({
+    phase_id: phaseId,
+    title,
+    description: document.getElementById('m-ip-desc').value,
+    owner: document.getElementById('m-ip-owner').value,
+    priority: document.getElementById('m-ip-priority').value,
+    start_date: document.getElementById('m-ip-start').value || null,
+    due_date: document.getElementById('m-ip-due').value || null,
+    status: document.getElementById('m-ip-status').value
+  });
+  if (result) { toast('İş paketi eklendi ✓'); closeModal(); renderHierarchy(); }
+}
 
-async function submitEditAction(id) {
-  const title = document.getElementById('m-edit-title').value.trim();
-  if (!title) { toast('Aksiyon başlığı zorunlu', 'error'); return; }
+function showEditIsPaketiModal(id) {
+  const ip = isPaketleri.find(x => x.id === id);
+  if (!ip) return;
+  showModal(`
+    <div class="modal-header"><span class="modal-title">İş Paketi Düzenle</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div class="modal-body">
+      <div class="form-group"><label>İş Paketi Adı *</label><input id="m-edit-ip-title" class="form-input" value="${ip.title}"></div>
+      <div class="form-group"><label>Açıklama</label><textarea id="m-edit-ip-desc" class="form-input" rows="2">${ip.description||''}</textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Sorumlu</label><input id="m-edit-ip-owner" class="form-input" value="${ip.owner||''}"></div>
+        <div class="form-group"><label>Öncelik</label>
+          <select id="m-edit-ip-priority" class="form-input">
+            <option value="high" ${ip.priority==='high'?'selected':''}>Yüksek</option>
+            <option value="medium" ${ip.priority==='medium'?'selected':''}>Orta</option>
+            <option value="low" ${ip.priority==='low'?'selected':''}>Düşük</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Başlangıç</label><input id="m-edit-ip-start" type="date" class="form-input" value="${ip.start_date||''}"></div>
+        <div class="form-group"><label>Bitiş</label><input id="m-edit-ip-due" type="date" class="form-input" value="${ip.due_date||''}"></div>
+      </div>
+      <div class="form-group"><label>Durum</label>
+        <select id="m-edit-ip-status" class="form-input">
+          <option value="todo" ${ip.status==='todo'?'selected':''}>To Do</option>
+          <option value="inprogress" ${ip.status==='inprogress'?'selected':''}>In Progress</option>
+          <option value="done" ${ip.status==='done'?'selected':''}>Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="submitEditIsPaketi('${id}')">Kaydet</button>
+    </div>`);
+}
+async function submitEditIsPaketi(id) {
+  const title = document.getElementById('m-edit-ip-title').value.trim();
+  if (!title) { toast('İş paketi adı zorunlu', 'error'); return; }
   const data = {
     title,
-    description: document.getElementById('m-edit-desc').value,
-    owner: document.getElementById('m-edit-owner').value,
-    priority: document.getElementById('m-edit-priority').value,
-    start_date: document.getElementById('m-edit-start').value || null,
-    due_date: document.getElementById('m-edit-due').value || null,
-    status: document.getElementById('m-edit-status').value
+    description: document.getElementById('m-edit-ip-desc').value,
+    owner: document.getElementById('m-edit-ip-owner').value,
+    priority: document.getElementById('m-edit-ip-priority').value,
+    start_date: document.getElementById('m-edit-ip-start').value || null,
+    due_date: document.getElementById('m-edit-ip-due').value || null,
+    status: document.getElementById('m-edit-ip-status').value
   };
-  const ok = await supabaseUpdate('actions', id, data);
+  const ok = await supabaseUpdate('is_paketleri', id, data);
   if (ok) {
-    const a = actions.find(x => x.id === id);
-    if (a) Object.assign(a, data);
-    toast('Aksiyon güncellendi ✓');
+    const ip = isPaketleri.find(x => x.id === id);
+    if (ip) Object.assign(ip, data);
+    toast('İş paketi güncellendi ✓');
+    closeModal();
+    renderHierarchy();
+  }
+}
+async function deleteIsPaketi(id) {
+  if (!confirm('Bu iş paketini silmek istediğinizden emin misiniz? İçindeki görevler de silinecek.')) return;
+  const ok = await deleteItem('is_paketleri', id);
+  if (ok) {
+    isPaketleri = isPaketleri.filter(x => x.id !== id);
+    gorevler = gorevler.filter(g => g.is_paketi_id !== id);
+    toast('İş paketi silindi');
+    renderHierarchy();
+    updateBadges();
+  }
+}
+
+// ── GÖREV MODAL ──
+function showAddGorevModal(isPaketiId) {
+  const ip = isPaketleri.find(x => x.id === isPaketiId);
+  showModal(`
+    <div class="modal-header"><span class="modal-title">Görev Ekle — ${ip?.title||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Görev Adı *</label><input id="m-gv-title" class="form-input" placeholder="Görev açıklaması..."></div>
+      <div class="form-group"><label>Açıklama</label><textarea id="m-gv-desc" class="form-input" rows="2"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Sorumlu</label><input id="m-gv-owner" class="form-input" placeholder="Ad Soyad"></div>
+        <div class="form-group"><label>Öncelik</label>
+          <select id="m-gv-priority" class="form-input">
+            <option value="high">Yüksek</option>
+            <option value="medium" selected>Orta</option>
+            <option value="low">Düşük</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Başlangıç</label><input id="m-gv-start" type="date" class="form-input"></div>
+        <div class="form-group"><label>Bitiş</label><input id="m-gv-due" type="date" class="form-input"></div>
+      </div>
+      <div class="form-group"><label>Durum</label>
+        <select id="m-gv-status" class="form-input">
+          <option value="todo">To Do</option>
+          <option value="inprogress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="submitAddGorev('${isPaketiId}')">Kaydet</button>
+    </div>`);
+}
+async function submitAddGorev(isPaketiId) {
+  const title = document.getElementById('m-gv-title').value.trim();
+  if (!title) { toast('Görev adı zorunlu', 'error'); return; }
+  const result = await createGorev({
+    is_paketi_id: isPaketiId,
+    title,
+    description: document.getElementById('m-gv-desc').value,
+    owner: document.getElementById('m-gv-owner').value,
+    priority: document.getElementById('m-gv-priority').value,
+    start_date: document.getElementById('m-gv-start').value || null,
+    due_date: document.getElementById('m-gv-due').value || null,
+    status: document.getElementById('m-gv-status').value
+  });
+  if (result) { toast('Görev eklendi ✓'); closeModal(); renderHierarchy(); }
+}
+
+function showEditGorevModal(id) {
+  const g = gorevler.find(x => x.id === id);
+  if (!g) return;
+  showModal(`
+    <div class="modal-header"><span class="modal-title">Görevi Düzenle</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Görev Adı *</label><input id="m-edit-gv-title" class="form-input" value="${g.title}"></div>
+      <div class="form-group"><label>Açıklama</label><textarea id="m-edit-gv-desc" class="form-input" rows="2">${g.description||''}</textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Sorumlu</label><input id="m-edit-gv-owner" class="form-input" value="${g.owner||''}"></div>
+        <div class="form-group"><label>Öncelik</label>
+          <select id="m-edit-gv-priority" class="form-input">
+            <option value="high" ${g.priority==='high'?'selected':''}>Yüksek</option>
+            <option value="medium" ${g.priority==='medium'?'selected':''}>Orta</option>
+            <option value="low" ${g.priority==='low'?'selected':''}>Düşük</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Başlangıç</label><input id="m-edit-gv-start" type="date" class="form-input" value="${g.start_date||''}"></div>
+        <div class="form-group"><label>Bitiş</label><input id="m-edit-gv-due" type="date" class="form-input" value="${g.due_date||''}"></div>
+      </div>
+      <div class="form-group"><label>Durum</label>
+        <select id="m-edit-gv-status" class="form-input">
+          <option value="todo" ${g.status==='todo'?'selected':''}>To Do</option>
+          <option value="inprogress" ${g.status==='inprogress'?'selected':''}>In Progress</option>
+          <option value="done" ${g.status==='done'?'selected':''}>Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="submitEditGorev('${id}')">Kaydet</button>
+    </div>`);
+}
+async function submitEditGorev(id) {
+  const title = document.getElementById('m-edit-gv-title').value.trim();
+  if (!title) { toast('Görev adı zorunlu', 'error'); return; }
+  const data = {
+    title,
+    description: document.getElementById('m-edit-gv-desc').value,
+    owner: document.getElementById('m-edit-gv-owner').value,
+    priority: document.getElementById('m-edit-gv-priority').value,
+    start_date: document.getElementById('m-edit-gv-start').value || null,
+    due_date: document.getElementById('m-edit-gv-due').value || null,
+    status: document.getElementById('m-edit-gv-status').value
+  };
+  const ok = await supabaseUpdate('gorevler', id, data);
+  if (ok) {
+    const g = gorevler.find(x => x.id === id);
+    if (g) Object.assign(g, data);
+    toast('Görev güncellendi ✓');
     closeModal();
     renderHierarchy();
     updateBadges();
-  } else {
-    toast('Güncelleme başarısız', 'error');
+  }
+}
+async function deleteGorevRow(id) {
+  if (!confirm('Bu görevi silmek istediğinizden emin misiniz?')) return;
+  const ok = await deleteItem('gorevler', id);
+  if (ok) {
+    gorevler = gorevler.filter(g => g.id !== id);
+    toast('Görev silindi');
+    renderHierarchy();
+    updateBadges();
   }
 }
 
-function openProject(projectId) {
-  navigate('hierarchy', null);
-}
-
-// ── TÜM PROJELER (basit liste) ──
-function renderAllProjects() {
-  const tb = document.getElementById('all-proj-table');
-  if (!tb) return;
-  const list = projFilterVal === 'all' ? projects : projects.filter(p => p.rag === projFilterVal);
-  if (!list.length) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Proje bulunamadı</td></tr>';
-    return;
-  }
-  tb.innerHTML = list.map(p => {
-    const phCount = getProjectPhases(p.id).length;
-    const acCount = getProjectActions(p.id).length;
-    return `<tr onclick="navigate('hierarchy',null)" style="cursor:pointer">
-      <td>${dot(p.rag)}</td>
-      <td class="td-wrap" style="font-weight:500">${p.name}</td>
-      <td style="color:var(--text2)">${phCount} faz</td>
-      <td style="text-align:center;font-weight:600;color:var(--amber)">${acCount}</td>
-      <td>${pill(p.rag)}</td>
-    </tr>`;
-  }).join('');
-}
-
-function projFilter(f, el) {
-  projFilterVal = f;
-  document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderAllProjects();
-}
-
-// ── AKSİYONLAR ──
+// ── TÜM GÖREVLER ──
 function renderActions() {
   const q = (document.getElementById('action-search') || {value: ''}).value.toLowerCase();
-  let list = [...actions];
-  if (actionFilter === 'late') list = list.filter(a => a.status === 'late');
-  else if (actionFilter === 'open') list = list.filter(a => a.status === 'open');
-  else if (actionFilter === 'done') list = list.filter(a => a.status === 'done');
-  if (q) list = list.filter(a => a.title.toLowerCase().includes(q));
+  let list = [...gorevler];
+  if (gorevFilter === 'late') list = getLateGorevler();
+  else if (gorevFilter === 'inprogress') list = list.filter(g => g.status === 'inprogress');
+  else if (gorevFilter === 'todo') list = list.filter(g => g.status === 'todo');
+  else if (gorevFilter === 'done') list = list.filter(g => g.status === 'done');
+  if (q) list = list.filter(g => g.title.toLowerCase().includes(q));
 
   const el = document.getElementById('action-list');
   if (!el) return;
   if (!list.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-title">Aksiyon bulunamadı</div></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-title">Görev bulunamadı</div></div>`;
     return;
   }
-  el.innerHTML = list.map(a => {
-    const done = a.status === 'done', late = a.status === 'late';
-    const phase = phases.find(p => p.id === a.phase_id);
-    const project = phase ? projects.find(p => p.id === phase.project_id) : null;
+  el.innerHTML = list.map(g => {
+    const done = g.status === 'done';
+    const late = g.status !== 'done' && g.due_date && new Date(g.due_date) < new Date();
+    const ip = isPaketleri.find(x => x.id === g.is_paketi_id);
+    const ph = ip ? phases.find(x => x.id === ip.phase_id) : null;
+    const proj = ph ? projects.find(x => x.id === ph.project_id) : null;
     return `<div class="action-item">
-      <div class="check-box ${done?'done':''}" onclick="toggleAction('${a.id}')">
-        ${done?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 4.5l2 2 3-3" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
-      </div>
       <div class="action-body">
-        <div class="action-title ${done?'done':''}">${a.title}</div>
+        <div class="action-title ${done?'done':''}">${g.title}</div>
         <div class="action-footer">
-          ${project ? `<span class="tag">${project.name}</span>` : ''}
-          ${phase ? `<span class="tag" style="background:var(--purple-bg);color:var(--purple)">${phase.name}</span>` : ''}
-          ${priorityPill(a.priority)}
-          <span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${a.due_date||''}</span>
-          <span style="font-size:11px;color:var(--text3)">${a.owner||''}</span>
+          ${proj ? `<span class="tag">${proj.name}</span>` : ''}
+          ${ip ? `<span class="tag" style="background:var(--purple-bg);color:var(--purple)">${ip.title}</span>` : ''}
+          ${statusPill(g.status)}
+          ${priorityPill(g.priority)}
+          ${g.due_date ? `<span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${formatDate(g.due_date)}</span>` : ''}
+          <span style="font-size:11px;color:var(--text3)">${g.owner||'Atanmamış'}</span>
         </div>
       </div>
-      <div style="flex-shrink:0">${pill(done?'green':late?'red':'amber')}</div>
+      <button class="btn btn-sm" onclick="showEditGorevModal('${g.id}')">✏️</button>
     </div>`;
   }).join('');
 }
 
 function filterAction(f, el) {
-  actionFilter = f;
+  gorevFilter = f;
   document.querySelectorAll('#action-filter-chips .chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   renderActions();
@@ -593,7 +696,7 @@ function renderRisks() {
   const el = document.getElementById('risk-table');
   if (!el) return;
   if (!risks.length) {
-    el.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Risk bulunamadı</td></tr>';
+    el.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Risk bulunamadı</td></tr>';
     return;
   }
   el.innerHTML = risks.map(r => {
@@ -633,7 +736,6 @@ function renderRoadmap() {
       </div>
     </div>`).join('');
 }
-
 function togglePhase(i) {
   const b = document.getElementById('ph-body-r-' + i);
   const a = document.getElementById('ph-arr-' + i);
@@ -647,19 +749,19 @@ function togglePhase(i) {
 function renderBriefing() {
   const el = document.getElementById('briefing-content');
   if (!el) return;
-  const lateCount = getLateActions().length;
+  const lateCount = getLateGorevler().length;
   const avgLoad = resources.length ? Math.round(resources.reduce((s,r)=>s+r.load,0)/resources.length) : 0;
   el.innerHTML = `
     <div class="brief-kpis">
       <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--purple)">${projects.length}</div><div class="brief-kpi-label">Aktif Proje</div></div>
-      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--amber)">${phases.length}</div><div class="brief-kpi-label">Toplam Faz</div></div>
-      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--red)">${lateCount}</div><div class="brief-kpi-label">Gecikmiş</div></div>
+      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--amber)">${isPaketleri.length}</div><div class="brief-kpi-label">İş Paketi</div></div>
+      <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--red)">${lateCount}</div><div class="brief-kpi-label">Gecikmiş Görev</div></div>
       <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--teal)">${avgLoad}%</div><div class="brief-kpi-label">Ort. Kapasite</div></div>
     </div>
     <div style="font-size:12px;line-height:1.8;color:var(--text)">
       <strong>Flormar Fusion</strong> programı kapsamında <strong>${projects.length} aktif proje</strong>, 
-      <strong>${phases.length} faz</strong> ve <strong>${actions.length} aksiyon</strong> takip edilmektedir.
-      ${lateCount > 0 ? `<span style="color:var(--red)"> ${lateCount} gecikmiş aksiyon bulunmaktadır.</span>` : ' Tüm aksiyonlar zamanındadır.'}
+      <strong>${isPaketleri.length} iş paketi</strong> ve <strong>${gorevler.length} görev</strong> takip edilmektedir.
+      ${lateCount > 0 ? `<span style="color:var(--red)"> ${lateCount} gecikmiş görev bulunmaktadır.</span>` : ' Tüm görevler zamanındadır.'}
     </div>`;
 }
 
