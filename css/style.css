@@ -246,4 +246,56 @@ tbody tr:hover td{background:var(--bg)}
 .gorev-row{display:flex;align-items:flex-start;gap:10px;padding:8px 16px 8px 48px;border-bottom:1px solid var(--border);transition:background .1s}
 .gorev-row:last-child{border-bottom:none}
 .gorev-row:hover{background:var(--bg)}
+
+/* ── HİYERARŞİ YENİ STİLLER ── */
+.h-project-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.h-project-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;gap:12px;transition:background .15s}
+.h-project-header:hover{background:var(--bg)}
+.h-project-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.h-project-title{font-size:14px;font-weight:600}
+.h-project-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.h-project-body{border-top:1px solid var(--border)}
+.h-progress-wrap{padding:0 16px;background:var(--surface)}
+
+.h-phase-block{border-bottom:1px solid var(--border)}
+.h-phase-block:last-child{border-bottom:none}
+.h-phase-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 10px 24px;cursor:pointer;gap:8px;transition:background .15s;background:var(--surface2)}
+.h-phase-header:hover{background:var(--border)}
+.h-phase-stripe{width:3px;height:20px;border-radius:2px;background:var(--purple);flex-shrink:0}
+.h-phase-title{font-size:12px;font-weight:600}
+.h-phase-meta{font-size:10px;color:var(--text3);margin-top:1px}
+.h-phase-body{background:var(--surface)}
+
+.h-ip-block{border-bottom:1px solid var(--border)}
+.h-ip-block:last-child{border-bottom:none}
+.h-ip-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 10px 40px;cursor:pointer;gap:8px;transition:background .15s}
+.h-ip-header:hover{background:var(--bg)}
+.h-ip-icon{width:22px;height:22px;border-radius:5px;background:var(--purple-bg);color:var(--purple);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.h-ip-title{font-size:12px;font-weight:600}
+.h-ip-meta{font-size:10px;color:var(--text3);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap}
+.h-ip-body{background:var(--surface2)}
+
+.h-gorev-row{display:flex;align-items:center;justify-content:space-between;padding:8px 16px 8px 64px;border-bottom:1px solid var(--border);gap:8px;transition:background .15s}
+.h-gorev-row:last-child{border-bottom:none}
+.h-gorev-row:hover{background:var(--bg)}
+.h-gorev-row:hover .h-actions{opacity:1}
+.h-gorev-indent{width:16px;flex-shrink:0}
+.h-gorev-title{font-size:12px;font-weight:500}
+.h-gorev-title.done{text-decoration:line-through;color:var(--text3)}
+.h-gorev-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.h-gorev-done{opacity:.7}
+
+.h-row-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.h-row-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+
+.h-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.h-ip-header:hover .h-actions{opacity:1}
+.h-action-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.h-action-btn:hover{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
+.h-action-delete:hover{background:var(--red-bg);border-color:var(--red-mid);color:var(--red)}
+
+.h-chevron{color:var(--text3);font-size:11px;transition:transform .2s;flex-shrink:0}
+.h-empty-hint{padding:12px 16px;font-size:11px;color:var(--text3)}
+.h-link{color:var(--purple);cursor:pointer}
+.h-link:hover{text-decoration:underline}
 }
