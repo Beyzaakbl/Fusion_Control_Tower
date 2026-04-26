@@ -23,14 +23,14 @@ function statusPill(s) {
 }
 function toast(msg, type = 'success') {
   const el = document.createElement('div');
-  el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:${type === 'success' ? '#3b6d11' : '#a32d2d'};box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s`;
+  el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;color:#fff;background:${type==='success'?'#3b6d11':'#a32d2d'};box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s`;
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
+  setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 2000);
 }
 function formatDate(d) {
   if (!d) return null;
-  return new Date(d).toLocaleDateString('tr-TR', {day:'2-digit', month:'short', year:'numeric'});
+  return new Date(d).toLocaleDateString('tr-TR', {day:'2-digit',month:'short',year:'numeric'});
 }
 
 // ── BADGES ──
@@ -43,24 +43,20 @@ function updateBadges() {
   if (el('metric-late-badge')) el('metric-late-badge').textContent = late.length + ' geç';
   if (el('metric-projects')) el('metric-projects').textContent = projects.length;
   if (el('metric-packs')) el('metric-packs').textContent = isPaketleri.length;
-
-  const avgLoad = resources.length
-    ? Math.round(resources.reduce((s, r) => s + r.load, 0) / resources.length) : 0;
+  const avgLoad = resources.length ? Math.round(resources.reduce((s,r)=>s+r.load,0)/resources.length) : 0;
   if (el('metric-load')) el('metric-load').textContent = avgLoad + '%';
   if (el('metric-load-sub')) el('metric-load-sub').textContent =
-    resources.filter(r => r.load > 85).map(r => r.name).join(' & ') || 'Kapasite normal';
-
-  const riskProj = projects.filter(p => p.rag !== 'green').length;
+    resources.filter(r=>r.load>85).map(r=>r.name).join(' & ') || 'Kapasite normal';
+  const riskProj = projects.filter(p=>p.rag!=='green').length;
   if (el('metric-projects-sub')) el('metric-projects-sub').textContent =
-    `${projects.length - riskProj} yolunda · ${riskProj} riskli`;
+    `${projects.length-riskProj} yolunda · ${riskProj} riskli`;
 }
 
 // ── DASHBOARD ──
 function renderDashboard() {
   const late = getLateGorevler();
-
   const pl = document.getElementById('proj-list');
-  if (pl) pl.innerHTML = projects.slice(0, 6).map(p => {
+  if (pl) pl.innerHTML = projects.slice(0,6).map(p => {
     const ipCount = getProjectIsPaketleri(p.id).length;
     const gvCount = getProjectGorevler(p.id).length;
     return `<div class="proj-item" onclick="navigate('hierarchy',null)" style="cursor:pointer">
@@ -75,24 +71,24 @@ function renderDashboard() {
   }).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Henüz proje yok</div></div>';
 
   const am = document.getElementById('action-mini');
-  if (am) am.innerHTML = late.slice(0, 4).map(g => `
+  if (am) am.innerHTML = late.slice(0,4).map(g => `
     <div class="action-item" onclick="showEditGorevModal('${g.id}')" style="cursor:pointer">
       <div class="action-body">
         <div class="action-title">${g.title}</div>
         <div class="action-footer">
           <span class="action-due late">⚠ ${formatDate(g.due_date)||'—'}</span>
-          <span style="font-size:11px;color:var(--text3)">${g.owner || 'Atanmamış'}</span>
+          <span style="font-size:11px;color:var(--text3)">${g.owner||'Atanmamış'}</span>
         </div>
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Gecikmiş görev yok ✓</div>';
 
   const rm = document.getElementById('risk-mini');
-  if (rm) rm.innerHTML = risks.filter(r => r.status !== 'Kapandı').slice(0, 4).map(r => `
+  if (rm) rm.innerHTML = risks.filter(r=>r.status!=='Kapandı').slice(0,4).map(r => `
     <div class="action-item">
       <div style="width:20px;height:20px;border-radius:4px;background:${r.level==='red'?'var(--red-bg)':'var(--amber-bg)'};color:${r.level==='red'?'var(--red)':'var(--amber)'};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${r.level==='red'?'!':'~'}</div>
       <div class="action-body">
         <div class="action-title">${r.description}</div>
-        <div class="action-footer"><span style="font-size:11px;color:var(--text3)">${r.owner || '—'}</span></div>
+        <div class="action-footer"><span style="font-size:11px;color:var(--text3)">${r.owner||'—'}</span></div>
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Açık risk yok ✓</div>';
 
@@ -101,13 +97,13 @@ function renderDashboard() {
     <div class="ws-card"><div class="ws-card-top">
       <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div></div>
       <div class="ws-info"><div class="ws-title">YÜG Vizyon Çalıştayı #1</div>
-      <div class="ws-">08 Nis 2026 · Tamamlandı · AI Analiz Edildi</div>
+      <div class="ws-sub">08 Nis 2026 · Tamamlandı · AI Analiz Edildi</div>
       <div style="display:flex;gap:4px;margin-top:5px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Aktif</span></div></div>
     </div></div>
     <div class="ws-card" style="border-bottom:none"><div class="ws-card-top">
       <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">15</div></div>
       <div class="ws-info"><div class="ws-title">YÜG + P2P Haftalık</div>
-      <div class="ws-">15 Nis 2026 · 10:00 – 14:00</div>
+      <div class="ws-sub">15 Nis 2026 · 10:00 – 14:00</div>
       <div style="margin-top:5px"><span class="pill pill-amber">Yaklaşan</span></div></div>
     </div></div>`;
 }
@@ -116,33 +112,27 @@ function renderDashboard() {
 function renderHierarchy() {
   const el = document.getElementById('hierarchy-body');
   if (!el) return;
-
   const prog = programs[0];
   if (!prog) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-title">Program bulunamadı</div></div>';
     return;
   }
-
-  const progProjects = [...projects].sort((a, b) => a.order_num - b.order_num);
-
+  const progProjects = [...projects].sort((a,b)=>a.order_num-b.order_num);
   el.innerHTML = `
-    <!-- Program başlığı -->
     <div class="prog-header">
       <div class="prog-icon">F</div>
       <div class="prog-info">
         <div class="prog-name">${prog.name}</div>
         <div class="prog-meta">${progProjects.length} proje · ${phases.length} faz · ${isPaketleri.length} iş paketi · ${gorevler.length} görev</div>
       </div>
-      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="()">+ Proje Ekle</button>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="showAddProjectModal()">+ Proje Ekle</button>
     </div>
-
-    <!-- Projeler -->
     <div id="proj-hierarchy">
-      ${progProjects.length ? progProjects.map(p => renderProjectCard(p)).join('') :
+      ${progProjects.length ? progProjects.map(p=>renderProjectCard(p)).join('') :
         `<div class="empty-state">
           <div class="empty-icon">📋</div>
           <div class="empty-title">Henüz proje yok</div>
-          <button class="btn btn-primary" onclick="()">+ Proje Ekle</button>
+          <button class="btn btn-primary" onclick="showAddProjectModal()">+ Proje Ekle</button>
         </div>`}
     </div>`;
 }
@@ -151,13 +141,11 @@ function renderProjectCard(p) {
   const projPhases = getProjectPhases(p.id);
   const projIsPaketleri = getProjectIsPaketleri(p.id);
   const projGorevler = getProjectGorevler(p.id);
-  const doneCount = projGorevler.filter(g => g.status === 'done').length;
-  const progress = projGorevler.length ? Math.round((doneCount / projGorevler.length) * 100) : 0;
-  const ragColor = p.rag === 'green' ? '#639922' : p.rag === 'amber' ? '#ba7517' : '#e24b4a';
-
+  const doneCount = projGorevler.filter(g=>g.status==='done').length;
+  const progress = projGorevler.length ? Math.round((doneCount/projGorevler.length)*100) : 0;
+  const ragColor = p.rag==='green'?'#639922':p.rag==='amber'?'#ba7517':'#e24b4a';
   return `
     <div class="h-project-card">
-      <!-- Proje başlık satırı -->
       <div class="h-project-header" onclick="toggleProjectCard('${p.id}')">
         <div class="h-row-left">
           <div class="h-project-dot" style="background:${ragColor}"></div>
@@ -166,48 +154,40 @@ function renderProjectCard(p) {
             <div class="h-project-meta">
               ${projPhases.length} faz · ${projIsPaketleri.length} iş paketi · 
               ${projGorevler.length} görev · %${progress} tamamlandı
+              ${p.start_date ? `· ${formatDate(p.start_date)} → ${formatDate(p.end_date)||'?'}` : ''}
             </div>
           </div>
         </div>
         <div class="h-row-right">
           ${pill(p.rag)}
+          <button class="btn btn-sm" onclick="event.stopPropagation();showEditProjectModal('${p.id}')">✏️</button>
           <button class="btn btn-sm" onclick="event.stopPropagation();showAddPhaseModal('${p.id}')">+ Faz</button>
           <span class="h-chevron" id="proj-arr-${p.id}">▼</span>
         </div>
       </div>
-
-      <!-- Progress bar -->
       <div class="h-progress-wrap">
-        <div class="progress">
-          <div class="progress-fill" style="width:${progress}%;background:${ragColor}"></div>
-        </div>
+        <div class="progress"><div class="progress-fill" style="width:${progress}%;background:${ragColor}"></div></div>
       </div>
-
-      <!-- Fazlar -->
       <div class="h-project-body" id="proj-body-${p.id}">
-        ${projPhases.length ? projPhases.map(ph => renderPhaseBlock(ph, p)).join('') :
-          `<div class="h-empty-hint">
-            Henüz faz yok — <span class="h-link" onclick="showAddPhaseModal('${p.id}')">faz ekle</span>
-          </div>`}
+        ${projPhases.length ? projPhases.map(ph=>renderPhaseBlock(ph,p)).join('') :
+          `<div class="h-empty-hint">Henüz faz yok — <span class="h-link" onclick="showAddPhaseModal('${p.id}')">faz ekle</span></div>`}
       </div>
     </div>`;
 }
 
 function renderPhaseBlock(ph, project) {
   const phIsPaketleri = getPhaseIsPaketleri(ph.id);
-  const phGorevler = phIsPaketleri.flatMap(ip => getIsPaketiGorevler(ip.id));
-  const doneCount = phGorevler.filter(g => g.status === 'done').length;
-
+  const phGorevler = phIsPaketleri.flatMap(ip=>getIsPaketiGorevler(ip.id));
+  const doneCount = phGorevler.filter(g=>g.status==='done').length;
   return `
     <div class="h-phase-block">
-      <!-- Faz başlık satırı -->
       <div class="h-phase-header" onclick="togglePhaseBlock('${ph.id}')">
         <div class="h-row-left">
           <div class="h-phase-stripe"></div>
           <div>
             <div class="h-phase-title">${ph.name}</div>
             <div class="h-phase-meta">
-              ${formatDate(ph.start_date) || '?'} → ${formatDate(ph.end_date) || '?'} · 
+              ${formatDate(ph.start_date)||'?'} → ${formatDate(ph.end_date)||'?'} · 
               ${phIsPaketleri.length} iş paketi · ${phGorevler.length} görev · ${doneCount} tamamlandı
             </div>
           </div>
@@ -217,10 +197,8 @@ function renderPhaseBlock(ph, project) {
           <span class="h-chevron" id="ph-arr-${ph.id}">▼</span>
         </div>
       </div>
-
-      <!-- İş paketleri -->
       <div class="h-phase-body" id="ph-body-${ph.id}">
-        ${phIsPaketleri.length ? phIsPaketleri.map(ip => renderIsPaketiBlock(ip)).join('') :
+        ${phIsPaketleri.length ? phIsPaketleri.map(ip=>renderIsPaketiBlock(ip)).join('') :
           `<div class="h-empty-hint" style="padding-left:32px">
             Henüz iş paketi yok — <span class="h-link" onclick="showAddIsPaketiModal('${ph.id}','${project.id}')">iş paketi ekle</span>
           </div>`}
@@ -230,12 +208,10 @@ function renderPhaseBlock(ph, project) {
 
 function renderIsPaketiBlock(ip) {
   const ipGorevler = getIsPaketiGorevler(ip.id);
-  const doneCount = ipGorevler.filter(g => g.status === 'done').length;
-  const progress = ipGorevler.length ? Math.round((doneCount / ipGorevler.length) * 100) : 0;
-
+  const doneCount = ipGorevler.filter(g=>g.status==='done').length;
+  const progress = ipGorevler.length ? Math.round((doneCount/ipGorevler.length)*100) : 0;
   return `
     <div class="h-ip-block">
-      <!-- İş paketi başlık satırı -->
       <div class="h-ip-header" onclick="toggleIsPaketiBlock('${ip.id}')">
         <div class="h-row-left">
           <div class="h-ip-icon">
@@ -247,8 +223,8 @@ function renderIsPaketiBlock(ip) {
           <div>
             <div class="h-ip-title">${ip.title}</div>
             <div class="h-ip-meta">
-              ${ip.owner ? `<span>${ip.owner}</span>` : '<span style="color:var(--text3);font-style:italic">Atanmamış</span>'}
-              ${ip.due_date ? `· <span>⏱ ${formatDate(ip.due_date)}</span>` : ''}
+              ${ip.owner?`<span>${ip.owner}</span>`:'<span style="color:var(--text3);font-style:italic">Atanmamış</span>'}
+              ${ip.due_date?`· <span>⏱ ${formatDate(ip.due_date)}</span>`:''}
               · <span>${ipGorevler.length} görev · %${progress} tamamlandı</span>
             </div>
           </div>
@@ -268,10 +244,8 @@ function renderIsPaketiBlock(ip) {
           <span class="h-chevron" id="ip-arr-${ip.id}">▼</span>
         </div>
       </div>
-
-      <!-- Görevler -->
       <div class="h-ip-body" id="ip-body-${ip.id}">
-        ${ipGorevler.length ? ipGorevler.map(g => renderGorevRow(g)).join('') :
+        ${ipGorevler.length ? ipGorevler.map(g=>renderGorevRow(g)).join('') :
           `<div class="h-empty-hint" style="padding-left:56px">
             Henüz görev yok — <span class="h-link" onclick="showAddGorevModal('${ip.id}')">görev ekle</span>
           </div>`}
@@ -280,9 +254,8 @@ function renderIsPaketiBlock(ip) {
 }
 
 function renderGorevRow(g) {
-  const done = g.status === 'done';
-  const late = g.status !== 'done' && g.due_date && new Date(g.due_date) < new Date();
-
+  const done = g.status==='done';
+  const late = g.status!=='done' && g.due_date && new Date(g.due_date)<new Date();
   return `
     <div class="h-gorev-row ${done?'h-gorev-done':''}" id="gorev-row-${g.id}">
       <div class="h-row-left">
@@ -295,8 +268,8 @@ function renderGorevRow(g) {
           <div class="h-gorev-meta">
             ${statusPill(g.status)}
             ${priorityPill(g.priority)}
-            ${g.due_date ? `<span class="action-due ${late?'late':'ok'} ml-4">${late?'⚠ ':''}${formatDate(g.due_date)}</span>` : ''}
-            <span style="font-size:11px;color:var(--text3)">${g.owner || 'Atanmamış'}</span>
+            ${g.due_date?`<span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${formatDate(g.due_date)}</span>`:''}
+            <span style="font-size:11px;color:var(--text3)">${g.owner||'Atanmamış'}</span>
           </div>
         </div>
       </div>
@@ -311,48 +284,148 @@ function renderGorevRow(g) {
     </div>`;
 }
 
+// ── GANTT ──
+function renderGantt() {
+  const el = document.getElementById('gantt-body');
+  if (!el) return;
+
+  const projs = projects.filter(p => p.start_date && p.end_date);
+  if (!projs.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <div class="empty-title">Gantt için proje tarihleri gerekli</div>
+      <div class="empty-text">Program Hiyerarşisi sayfasından projelere başlangıç ve bitiş tarihi ekleyin.</div>
+      <button class="btn btn-primary" onclick="navigate('hierarchy',null)">Hiyerarşiye Git →</button>
+    </div>`;
+    return;
+  }
+
+  // Zaman aralığını hesapla
+  const allStarts = projs.map(p => new Date(p.start_date));
+  const allEnds   = projs.map(p => new Date(p.end_date));
+  const minDate   = new Date(Math.min(...allStarts));
+  const maxDate   = new Date(Math.max(...allEnds));
+  minDate.setDate(1); // ayın başına al
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
+
+  // Ay başlıklarını oluştur
+  const months = [];
+  let cur = new Date(minDate);
+  while (cur <= maxDate) {
+    months.push(new Date(cur));
+    cur.setMonth(cur.getMonth() + 1);
+  }
+
+  // Bugünün pozisyonu
+  const todayOffset = Math.floor((today - minDate) / 86400000);
+  const todayPct    = (todayOffset / totalDays) * 100;
+  const showToday   = todayOffset >= 0 && todayOffset <= totalDays;
+
+  const ragColor = r => r==='green'?'#639922':r==='amber'?'#ba7517':'#e24b4a';
+
+  el.innerHTML = `
+    <div class="gantt-wrap">
+      <!-- Ay başlıkları -->
+      <div class="gantt-header">
+        <div class="gantt-label-col"></div>
+        <div class="gantt-timeline" style="position:relative">
+          ${months.map(m => {
+            const mStart  = new Date(m.getFullYear(), m.getMonth(), 1);
+            const mEnd    = new Date(m.getFullYear(), m.getMonth()+1, 0);
+            const left    = Math.max(0, (mStart - minDate)/86400000/totalDays*100);
+            const width   = Math.min(100-left, (Math.min(mEnd,maxDate)-Math.max(mStart,minDate))/86400000/totalDays*100);
+            return `<div class="gantt-month" style="left:${left}%;width:${width}%">
+              ${m.toLocaleDateString('tr-TR',{month:'short',year:'2-digit'})}
+            </div>`;
+          }).join('')}
+          ${showToday ? `<div class="gantt-today-header" style="left:${todayPct}%">Bugün</div>` : ''}
+        </div>
+      </div>
+
+      <!-- Proje satırları -->
+      <div class="gantt-rows">
+        ${projs.map(p => {
+          const s    = new Date(p.start_date);
+          const e    = new Date(p.end_date);
+          const left = ((s - minDate)/86400000/totalDays*100).toFixed(2);
+          const w    = ((e - s)/86400000/totalDays*100).toFixed(2);
+          const projGorevler = getProjectGorevler(p.id);
+          const done = projGorevler.filter(g=>g.status==='done').length;
+          const pct  = projGorevler.length ? Math.round(done/projGorevler.length*100) : 0;
+          const color = ragColor(p.rag);
+
+          return `
+            <div class="gantt-row">
+              <div class="gantt-label-col">
+                <div class="gantt-proj-dot" style="background:${color}"></div>
+                <div class="gantt-proj-name">${p.name}</div>
+              </div>
+              <div class="gantt-timeline" style="position:relative">
+                ${showToday ? `<div class="gantt-today-line" style="left:${todayPct}%"></div>` : ''}
+                <div class="gantt-bar-wrap" style="left:${left}%;width:${w}%">
+                  <div class="gantt-bar" style="background:${color}" title="${p.name}: ${formatDate(p.start_date)} → ${formatDate(p.end_date)}">
+                    <div class="gantt-bar-fill" style="width:${pct}%;background:rgba(255,255,255,.35)"></div>
+                    <span class="gantt-bar-label">${p.name} · %${pct}</span>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Bugün etiketi -->
+      ${showToday ? `<div class="gantt-today-badge" style="left:calc(200px + ${todayPct}% * (100% - 200px) / 100)">
+        📅 ${today.toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'})}
+      </div>` : ''}
+    </div>`;
+}
+
 // ── TOGGLE ──
 function toggleProjectCard(id) {
-  const body = document.getElementById('proj-body-' + id);
-  const arr = document.getElementById('proj-arr-' + id);
+  const body = document.getElementById('proj-body-'+id);
+  const arr  = document.getElementById('proj-arr-'+id);
   if (!body) return;
-  const open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
+  const open = body.style.display!=='none';
+  body.style.display = open?'none':'block';
+  if (arr) arr.style.transform = open?'rotate(-90deg)':'';
 }
 function togglePhaseBlock(id) {
-  const body = document.getElementById('ph-body-' + id);
-  const arr = document.getElementById('ph-arr-' + id);
+  const body = document.getElementById('ph-body-'+id);
+  const arr  = document.getElementById('ph-arr-'+id);
   if (!body) return;
-  const open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
+  const open = body.style.display!=='none';
+  body.style.display = open?'none':'block';
+  if (arr) arr.style.transform = open?'rotate(-90deg)':'';
 }
 function toggleIsPaketiBlock(id) {
-  const body = document.getElementById('ip-body-' + id);
-  const arr = document.getElementById('ip-arr-' + id);
+  const body = document.getElementById('ip-body-'+id);
+  const arr  = document.getElementById('ip-arr-'+id);
   if (!body) return;
-  const open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  if (arr) arr.style.transform = open ? 'rotate(-90deg)' : '';
+  const open = body.style.display!=='none';
+  body.style.display = open?'none':'block';
+  if (arr) arr.style.transform = open?'rotate(-90deg)':'';
 }
 
 // ── MODAL ──
 function showModal(html) {
-  let overlay = document.getElementById('modal-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'modal-overlay';
-    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px`;
-    overlay.onclick = e => { if (e.target === overlay) closeModal(); };
-    document.body.appendChild(overlay);
+  let ov = document.getElementById('modal-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'modal-overlay';
+    ov.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px`;
+    ov.onclick = e => { if (e.target===ov) closeModal(); };
+    document.body.appendChild(ov);
   }
-  overlay.innerHTML = `<div class="modal-box">${html}</div>`;
-  overlay.style.display = 'flex';
+  ov.innerHTML = `<div class="modal-box">${html}</div>`;
+  ov.style.display = 'flex';
 }
 function closeModal() {
   const o = document.getElementById('modal-overlay');
-  if (o) o.style.display = 'none';
+  if (o) o.style.display='none';
 }
 
 // ── PROJE MODAL ──
@@ -376,25 +449,73 @@ function showAddProjectModal() {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="()">Kaydet</button>
+      <button class="btn btn-primary" onclick="submitAddProject()">Kaydet</button>
     </div>`);
 }
-async function () {
+async function submitAddProject() {
   const name = document.getElementById('m-proj-name').value.trim();
-  if (!name) { toast('Proje adı zorunlu', 'error'); return; }
+  if (!name) { toast('Proje adı zorunlu','error'); return; }
   const result = await createProject({
     program_id: programs[0]?.id,
     name,
     description: document.getElementById('m-proj-desc').value,
     rag: document.getElementById('m-proj-rag').value,
-    order_num: projects.length + 1
+    start_date: document.getElementById('m-proj-start').value || null,
+    end_date: document.getElementById('m-proj-end').value || null,
+    order_num: projects.length+1
   });
   if (result) { toast('Proje eklendi ✓'); closeModal(); renderHierarchy(); }
 }
 
+function showEditProjectModal(id) {
+  const p = projects.find(x=>x.id===id);
+  if (!p) return;
+  showModal(`
+    <div class="modal-header"><span class="modal-title">Projeyi Düzenle</span><span class="modal-close" onclick="closeModal()">✕</span></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Proje Adı *</label><input id="m-edit-proj-name" class="form-input" value="${p.name}"></div>
+      <div class="form-group"><label>Açıklama</label><textarea id="m-edit-proj-desc" class="form-input" rows="2">${p.description||''}</textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Başlangıç</label><input id="m-edit-proj-start" type="date" class="form-input" value="${p.start_date||''}"></div>
+        <div class="form-group"><label>Bitiş</label><input id="m-edit-proj-end" type="date" class="form-input" value="${p.end_date||''}"></div>
+      </div>
+      <div class="form-group"><label>Durum</label>
+        <select id="m-edit-proj-rag" class="form-input">
+          <option value="green" ${p.rag==='green'?'selected':''}>Yolunda</option>
+          <option value="amber" ${p.rag==='amber'?'selected':''}>Dikkat</option>
+          <option value="red" ${p.rag==='red'?'selected':''}>Kritik</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary" onclick="submitEditProject('${id}')">Kaydet</button>
+    </div>`);
+}
+async function submitEditProject(id) {
+  const name = document.getElementById('m-edit-proj-name').value.trim();
+  if (!name) { toast('Proje adı zorunlu','error'); return; }
+  const data = {
+    name,
+    description: document.getElementById('m-edit-proj-desc').value,
+    rag: document.getElementById('m-edit-proj-rag').value,
+    start_date: document.getElementById('m-edit-proj-start').value || null,
+    end_date: document.getElementById('m-edit-proj-end').value || null,
+  };
+  const ok = await supabaseUpdate('projects', id, data);
+  if (ok) {
+    const p = projects.find(x=>x.id===id);
+    if (p) Object.assign(p, data);
+    toast('Proje güncellendi ✓');
+    closeModal();
+    renderHierarchy();
+    renderGantt();
+  }
+}
+
 // ── FAZ MODAL ──
 function showAddPhaseModal(projectId) {
-  const p = projects.find(x => x.id === projectId);
+  const p = projects.find(x=>x.id===projectId);
   showModal(`
     <div class="modal-header"><span class="modal-title">Faz Ekle — ${p?.name||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
     <div class="modal-body">
@@ -407,26 +528,26 @@ function showAddPhaseModal(projectId) {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="mitAddPhase('${projectId}')">Kaydet</button>
+      <button class="btn btn-primary" onclick="submitAddPhase('${projectId}')">Kaydet</button>
     </div>`);
 }
-async function mitAddPhase(projectId) {
+async function submitAddPhase(projectId) {
   const name = document.getElementById('m-ph-name').value.trim();
-  if (!name) { toast('Faz adı zorunlu', 'error'); return; }
+  if (!name) { toast('Faz adı zorunlu','error'); return; }
   const result = await createPhase({
     project_id: projectId,
     name,
     description: document.getElementById('m-ph-desc').value,
     start_date: document.getElementById('m-ph-start').value || null,
     end_date: document.getElementById('m-ph-end').value || null,
-    order_num: getProjectPhases(projectId).length + 1
+    order_num: getProjectPhases(projectId).length+1
   });
   if (result) { toast('Faz eklendi ✓'); closeModal(); renderHierarchy(); }
 }
 
 // ── İŞ PAKETİ MODAL ──
 function showAddIsPaketiModal(phaseId, projectId) {
-  const ph = phases.find(x => x.id === phaseId);
+  const ph = phases.find(x=>x.id===phaseId);
   showModal(`
     <div class="modal-header"><span class="modal-title">İş Paketi Ekle — ${ph?.name||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
     <div class="modal-body">
@@ -456,12 +577,12 @@ function showAddIsPaketiModal(phaseId, projectId) {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="mitAddIsPaketi('${phaseId}')">Kaydet</button>
+      <button class="btn btn-primary" onclick="submitAddIsPaketi('${phaseId}')">Kaydet</button>
     </div>`);
 }
-async function mitAddIsPaketi(phaseId) {
+async function submitAddIsPaketi(phaseId) {
   const title = document.getElementById('m-ip-title').value.trim();
-  if (!title) { toast('İş paketi adı zorunlu', 'error'); return; }
+  if (!title) { toast('İş paketi adı zorunlu','error'); return; }
   const result = await createIsPaketi({
     phase_id: phaseId,
     title,
@@ -476,7 +597,7 @@ async function mitAddIsPaketi(phaseId) {
 }
 
 function showEditIsPaketiModal(id) {
-  const ip = isPaketleri.find(x => x.id === id);
+  const ip = isPaketleri.find(x=>x.id===id);
   if (!ip) return;
   showModal(`
     <div class="modal-header"><span class="modal-title">İş Paketi Düzenle</span><span class="modal-close" onclick="closeModal()">✕</span></div>
@@ -512,7 +633,7 @@ function showEditIsPaketiModal(id) {
 }
 async function submitEditIsPaketi(id) {
   const title = document.getElementById('m-edit-ip-title').value.trim();
-  if (!title) { toast('İş paketi adı zorunlu', 'error'); return; }
+  if (!title) { toast('İş paketi adı zorunlu','error'); return; }
   const data = {
     title,
     description: document.getElementById('m-edit-ip-desc').value,
@@ -524,7 +645,7 @@ async function submitEditIsPaketi(id) {
   };
   const ok = await supabaseUpdate('is_paketleri', id, data);
   if (ok) {
-    const ip = isPaketleri.find(x => x.id === id);
+    const ip = isPaketleri.find(x=>x.id===id);
     if (ip) Object.assign(ip, data);
     toast('İş paketi güncellendi ✓');
     closeModal();
@@ -535,8 +656,8 @@ async function deleteIsPaketi(id) {
   if (!confirm('Bu iş paketini silmek istediğinizden emin misiniz? İçindeki görevler de silinecek.')) return;
   const ok = await deleteItem('is_paketleri', id);
   if (ok) {
-    isPaketleri = isPaketleri.filter(x => x.id !== id);
-    gorevler = gorevler.filter(g => g.is_paketi_id !== id);
+    isPaketleri = isPaketleri.filter(x=>x.id!==id);
+    gorevler = gorevler.filter(g=>g.is_paketi_id!==id);
     toast('İş paketi silindi');
     renderHierarchy();
     updateBadges();
@@ -545,7 +666,7 @@ async function deleteIsPaketi(id) {
 
 // ── GÖREV MODAL ──
 function showAddGorevModal(isPaketiId) {
-  const ip = isPaketleri.find(x => x.id === isPaketiId);
+  const ip = isPaketleri.find(x=>x.id===isPaketiId);
   showModal(`
     <div class="modal-header"><span class="modal-title">Görev Ekle — ${ip?.title||''}</span><span class="modal-close" onclick="closeModal()">✕</span></div>
     <div class="modal-body">
@@ -575,12 +696,12 @@ function showAddGorevModal(isPaketiId) {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="Gorev('${isPaketiId}')">Kaydet</button>
+      <button class="btn btn-primary" onclick="submitAddGorev('${isPaketiId}')">Kaydet</button>
     </div>`);
 }
-async function Gorev(isPaketiId) {
+async function submitAddGorev(isPaketiId) {
   const title = document.getElementById('m-gv-title').value.trim();
-  if (!title) { toast('Görev adı zorunlu', 'error'); return; }
+  if (!title) { toast('Görev adı zorunlu','error'); return; }
   const result = await createGorev({
     is_paketi_id: isPaketiId,
     title,
@@ -595,7 +716,7 @@ async function Gorev(isPaketiId) {
 }
 
 function showEditGorevModal(id) {
-  const g = gorevler.find(x => x.id === id);
+  const g = gorevler.find(x=>x.id===id);
   if (!g) return;
   showModal(`
     <div class="modal-header"><span class="modal-title">Görevi Düzenle</span><span class="modal-close" onclick="closeModal()">✕</span></div>
@@ -631,7 +752,7 @@ function showEditGorevModal(id) {
 }
 async function submitEditGorev(id) {
   const title = document.getElementById('m-edit-gv-title').value.trim();
-  if (!title) { toast('Görev adı zorunlu', 'error'); return; }
+  if (!title) { toast('Görev adı zorunlu','error'); return; }
   const data = {
     title,
     description: document.getElementById('m-edit-gv-desc').value,
@@ -643,7 +764,7 @@ async function submitEditGorev(id) {
   };
   const ok = await supabaseUpdate('gorevler', id, data);
   if (ok) {
-    const g = gorevler.find(x => x.id === id);
+    const g = gorevler.find(x=>x.id===id);
     if (g) Object.assign(g, data);
     toast('Görev güncellendi ✓');
     closeModal();
@@ -655,7 +776,7 @@ async function deleteGorevRow(id) {
   if (!confirm('Bu görevi silmek istediğinizden emin misiniz?')) return;
   const ok = await deleteItem('gorevler', id);
   if (ok) {
-    gorevler = gorevler.filter(g => g.id !== id);
+    gorevler = gorevler.filter(g=>g.id!==id);
     toast('Görev silindi');
     renderHierarchy();
     updateBadges();
@@ -664,13 +785,13 @@ async function deleteGorevRow(id) {
 
 // ── TÜM GÖREVLER ──
 function renderActions() {
-  const q = (document.getElementById('action-search') || {value: ''}).value.toLowerCase();
+  const q = (document.getElementById('action-search')||{value:''}).value.toLowerCase();
   let list = [...gorevler];
-  if (gorevFilter === 'late') list = getLateGorevler();
-  else if (gorevFilter === 'inprogress') list = list.filter(g => g.status === 'inprogress');
-  else if (gorevFilter === 'todo') list = list.filter(g => g.status === 'todo');
-  else if (gorevFilter === 'done') list = list.filter(g => g.status === 'done');
-  if (q) list = list.filter(g => g.title.toLowerCase().includes(q));
+  if (gorevFilter==='late') list = getLateGorevler();
+  else if (gorevFilter==='inprogress') list = list.filter(g=>g.status==='inprogress');
+  else if (gorevFilter==='todo') list = list.filter(g=>g.status==='todo');
+  else if (gorevFilter==='done') list = list.filter(g=>g.status==='done');
+  if (q) list = list.filter(g=>g.title.toLowerCase().includes(q));
 
   const el = document.getElementById('action-list');
   if (!el) return;
@@ -679,20 +800,20 @@ function renderActions() {
     return;
   }
   el.innerHTML = list.map(g => {
-    const done = g.status === 'done';
-    const late = g.status !== 'done' && g.due_date && new Date(g.due_date) < new Date();
-    const ip = isPaketleri.find(x => x.id === g.is_paketi_id);
-    const ph = ip ? phases.find(x => x.id === ip.phase_id) : null;
-    const proj = ph ? projects.find(x => x.id === ph.project_id) : null;
+    const done = g.status==='done';
+    const late = g.status!=='done' && g.due_date && new Date(g.due_date)<new Date();
+    const ip   = isPaketleri.find(x=>x.id===g.is_paketi_id);
+    const ph   = ip ? phases.find(x=>x.id===ip.phase_id) : null;
+    const proj = ph ? projects.find(x=>x.id===ph.project_id) : null;
     return `<div class="action-item">
       <div class="action-body">
         <div class="action-title ${done?'done':''}">${g.title}</div>
         <div class="action-footer">
-          ${proj ? `<span class="tag">${proj.name}</span>` : ''}
-          ${ip ? `<span class="tag" style="background:var(--purple-bg);color:var(--purple)">${ip.title}</span>` : ''}
+          ${proj?`<span class="tag">${proj.name}</span>`:''}
+          ${ip?`<span class="tag" style="background:var(--purple-bg);color:var(--purple)">${ip.title}</span>`:''}
           ${statusPill(g.status)}
           ${priorityPill(g.priority)}
-          ${g.due_date ? `<span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${formatDate(g.due_date)}</span>` : ''}
+          ${g.due_date?`<span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${formatDate(g.due_date)}</span>`:''}
           <span style="font-size:11px;color:var(--text3)">${g.owner||'Atanmamış'}</span>
         </div>
       </div>
@@ -702,10 +823,9 @@ function renderActions() {
     </div>`;
   }).join('');
 }
-
 function filterAction(f, el) {
   gorevFilter = f;
-  document.querySelectorAll('#action-filter-chips .chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#action-filter-chips .chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
   renderActions();
 }
@@ -719,10 +839,10 @@ function renderResources() {
     return;
   }
   el.innerHTML = resources.map(r => {
-    const h = r.load > 85, m = r.load > 65;
-    const c = h ? 'var(--red)' : m ? 'var(--amber)' : 'var(--green)';
-    const bg = h ? 'var(--red-bg)' : m ? 'var(--amber-bg)' : 'var(--green-bg)';
-    const ini = r.name.replace('.', ' ').split(' ').map(w => w[0]).join('');
+    const h=r.load>85, m=r.load>65;
+    const c=h?'var(--red)':m?'var(--amber)':'var(--green)';
+    const bg=h?'var(--red-bg)':m?'var(--amber-bg)':'var(--green-bg)';
+    const ini=r.name.replace('.',' ').split(' ').map(w=>w[0]).join('');
     return `<div class="res-row">
       <div class="avatar" style="background:${bg};color:${c}">${ini}</div>
       <div style="min-width:90px"><div style="font-size:12px;font-weight:500">${r.name}</div><div style="font-size:10px;color:var(--text3)">${r.role}</div></div>
@@ -742,7 +862,7 @@ function renderRisks() {
     return;
   }
   el.innerHTML = risks.map(r => {
-    const project = projects.find(p => p.id === r.project_id);
+    const project = projects.find(p=>p.id===r.project_id);
     return `<tr>
       <td>${pill(r.level)}</td>
       <td class="td-wrap" style="font-size:12px">${r.description}</td>
@@ -757,7 +877,7 @@ function renderRisks() {
 function renderRoadmap() {
   const el = document.getElementById('roadmap-body');
   if (!el) return;
-  el.innerHTML = roadmapData.map((ph, i) => `
+  el.innerHTML = roadmapData.map((ph,i) => `
     <div class="phase-card">
       <div class="phase-header" onclick="togglePhase(${i})">
         <div class="phase-stripe" style="background:${ph.col}"></div>
@@ -766,7 +886,7 @@ function renderRoadmap() {
         <span class="phase-chevron open" id="rm-arr-${i}">▼</span>
       </div>
       <div class="phase-body" id="ph-body-r-${i}">
-        ${ph.items.map(it => `
+        ${ph.items.map(it=>`
           <div class="roadmap-item">
             <div class="rmap-num" style="background:${ph.col}22;color:${ph.col}">${it.n}</div>
             <div class="rmap-body">
@@ -779,12 +899,12 @@ function renderRoadmap() {
     </div>`).join('');
 }
 function togglePhase(i) {
-  const b = document.getElementById('ph-body-r-' + i);
-  const a = document.getElementById('rm-arr-' + i);
+  const b=document.getElementById('ph-body-r-'+i);
+  const a=document.getElementById('rm-arr-'+i);
   if (!b) return;
-  const open = b.style.display !== 'none';
-  b.style.display = open ? 'none' : 'block';
-  if (a) a.style.transform = open ? 'rotate(-90deg)' : '';
+  const open=b.style.display!=='none';
+  b.style.display=open?'none':'block';
+  if (a) a.style.transform=open?'rotate(-90deg)':'';
 }
 
 // ── BRİFİNG ──
@@ -792,7 +912,7 @@ function renderBriefing() {
   const el = document.getElementById('briefing-content');
   if (!el) return;
   const lateCount = getLateGorevler().length;
-  const avgLoad = resources.length ? Math.round(resources.reduce((s,r)=>s+r.load,0)/resources.length) : 0;
+  const avgLoad = resources.length?Math.round(resources.reduce((s,r)=>s+r.load,0)/resources.length):0;
   el.innerHTML = `
     <div class="brief-kpis">
       <div class="brief-kpi"><div class="brief-kpi-val" style="color:var(--purple)">${projects.length}</div><div class="brief-kpi-label">Aktif Proje</div></div>
@@ -803,7 +923,7 @@ function renderBriefing() {
     <div style="font-size:12px;line-height:1.8;color:var(--text)">
       <strong>Flormar Fusion</strong> programı kapsamında <strong>${projects.length} aktif proje</strong>, 
       <strong>${isPaketleri.length} iş paketi</strong> ve <strong>${gorevler.length} görev</strong> takip edilmektedir.
-      ${lateCount > 0 ? `<span style="color:var(--red)"> ${lateCount} gecikmiş görev bulunmaktadır.</span>` : ' Tüm görevler zamanındadır.'}
+      ${lateCount>0?`<span style="color:var(--red)"> ${lateCount} gecikmiş görev bulunmaktadır.</span>`:'Tüm görevler zamanındadır.'}
     </div>`;
 }
 
@@ -811,7 +931,7 @@ function renderBriefing() {
 function renderWorkshops() {
   const el = document.getElementById('ws-upcoming-grid');
   if (!el) return;
-  el.innerHTML = workshopsUpcoming.map(w => `
+  el.innerHTML = workshopsUpcoming.map(w=>`
     <div class="card"><div class="card-body">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span class="pill pill-amber">Yaklaşan</span>
