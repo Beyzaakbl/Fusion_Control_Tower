@@ -92,6 +92,8 @@ function renderDashboard() {
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Açık risk yok ✓</div>';
 
+  renderGanttDashboard();
+
   const wm = document.getElementById('ws-mini');
   if (wm) wm.innerHTML = `
     <div class="ws-card"><div class="ws-card-top">
@@ -284,7 +286,125 @@ function renderGorevRow(g) {
     </div>`;
 }
 
-// ── GANTT ──
+// ── DASHBOARD GANTT ──
+function renderGanttDashboard() {
+  const el = document.getElementById('gantt-dashboard');
+  if (!el) return;
+
+  const projs = projects.filter(p => p.start_date && p.end_date)
+                        .sort((a,b) => new Date(a.start_date) - new Date(b.start_date));
+
+  // Bugün pill
+  const todayPillEl = document.getElementById('gantt-today-pill');
+  const todayLabel = new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+  if (todayPillEl) todayPillEl.textContent = '📅 ' + todayLabel;
+
+  if (!projs.length) {
+    el.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:12px">
+      Gantt için projelere başlangıç ve bitiş tarihi ekleyin —
+      <span class="h-link" onclick="navigate('hierarchy',null)" style="color:var(--purple);cursor:pointer">Hiyerarşiye git →</span>
+    </div>`;
+    return;
+  }
+
+  // Zaman aralığı
+  const allStarts = projs.map(p => new Date(p.start_date));
+  const allEnds   = projs.map(p => new Date(p.end_date));
+  let   minDate   = new Date(Math.min(...allStarts));
+  const maxDate   = new Date(Math.max(...allEnds));
+  minDate.setDate(1); // ayın başına al
+  maxDate.setMonth(maxDate.getMonth()+1, 0); // ayın sonuna al
+
+  const today      = new Date(); today.setHours(0,0,0,0);
+  const totalMs    = maxDate - minDate;
+  const totalDays  = totalMs / 86400000;
+
+  // Ay tick'leri
+  const months = [];
+  let cur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  while (cur <= maxDate) {
+    months.push(new Date(cur));
+    cur.setMonth(cur.getMonth()+1);
+  }
+
+  const pct = d => Math.max(0, Math.min(100, ((new Date(d) - minDate) / totalMs) * 100));
+  const ragColor = r => r==='green'?'#639922':r==='amber'?'#ba7517':'#e24b4a';
+  const ragBg    = r => r==='green'?'#eaf3de':r==='amber'?'#faeeda':'#fcebeb';
+
+  // Bugün çizgisi pozisyonu
+  const todayPct     = pct(today);
+  const showToday    = today >= minDate && today <= maxDate;
+  const LABEL_W      = 160; // px — sol etiket kolonunun genişliği
+
+  el.innerHTML = `
+    <div class="gd-wrap">
+
+      <!-- AY BAŞLIKLARI -->
+      <div class="gd-header">
+        <div class="gd-label-col"></div>
+        <div class="gd-timeline" id="gd-timeline-header">
+          ${months.map(m => {
+            const mStart = new Date(m.getFullYear(), m.getMonth(), 1);
+            const mEnd   = new Date(m.getFullYear(), m.getMonth()+1, 0);
+            const left   = pct(Math.max(mStart, minDate));
+            const right  = pct(Math.min(mEnd,   maxDate));
+            const width  = Math.max(0, right - left);
+            const label  = m.toLocaleDateString('tr-TR',{month:'short',year:'2-digit'});
+            return `<div class="gd-month" style="left:${left}%;width:${width}%">${label}</div>`;
+          }).join('')}
+          ${showToday ? `<div class="gd-today-head" style="left:${todayPct}%">Bugün</div>` : ''}
+        </div>
+      </div>
+
+      <!-- PROJE SATIRLARI -->
+      <div class="gd-rows">
+        ${projs.map(p => {
+          const projGorevler = getProjectGorevler(p.id);
+          const done         = projGorevler.filter(g=>g.status==='done').length;
+          const completePct  = projGorevler.length ? Math.round(done/projGorevler.length*100) : 0;
+          const color        = ragColor(p.rag);
+          const bg           = ragBg(p.rag);
+          const barLeft      = pct(p.start_date);
+          const barRight     = pct(p.end_date);
+          const barWidth     = Math.max(0.5, barRight - barLeft);
+
+          // Etiket barın içinde mi dışında mı?
+          const labelInside  = barWidth > 12;
+
+          return `
+          <div class="gd-row">
+            <div class="gd-label-col">
+              <div class="gd-proj-dot" style="background:${color}"></div>
+              <div class="gd-proj-name" title="${p.name}">${p.name}</div>
+            </div>
+            <div class="gd-timeline">
+              <!-- Arka plan grid çizgileri -->
+              ${months.map(m => {
+                const mStart = new Date(m.getFullYear(), m.getMonth(), 1);
+                const left   = pct(Math.max(mStart, minDate));
+                return `<div class="gd-grid-line" style="left:${left}%"></div>`;
+              }).join('')}
+              <!-- Bugün çizgisi -->
+              ${showToday ? `<div class="gd-today-line" style="left:${todayPct}%"><div class="gd-today-dot"></div></div>` : ''}
+              <!-- Proje barı -->
+              <div class="gd-bar-wrap" style="left:${barLeft}%;width:${barWidth}%">
+                <div class="gd-bar" style="background:${color};border-color:${color}" title="${p.name}&#10;${formatDate(p.start_date)} → ${formatDate(p.end_date)}&#10;%${completePct} tamamlandı">
+                  <div class="gd-bar-progress" style="width:${completePct}%;background:rgba(255,255,255,0.3)"></div>
+                  ${labelInside
+                    ? `<span class="gd-bar-label inside">${p.name} · %${completePct}</span>`
+                    : ''}
+                </div>
+              </div>
+              ${!labelInside ? `<div class="gd-bar-label-out" style="left:${barRight + 0.5}%">${p.name} · %${completePct}</div>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+    </div>`;
+}
+
+// ── GANTT (ayrı sayfa) ──
 function renderGantt() {
   const el = document.getElementById('gantt-body');
   if (!el) return;
@@ -510,6 +630,7 @@ async function submitEditProject(id) {
     closeModal();
     renderHierarchy();
     renderGantt();
+    renderGanttDashboard();
   }
 }
 
