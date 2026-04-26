@@ -101,13 +101,13 @@ function renderDashboard() {
     <div class="ws-card"><div class="ws-card-top">
       <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div></div>
       <div class="ws-info"><div class="ws-title">YÜG Vizyon Çalıştayı #1</div>
-      <div class="ws-sub">08 Nis 2026 · Tamamlandı · AI Analiz Edildi</div>
+      <div class="ws-">08 Nis 2026 · Tamamlandı · AI Analiz Edildi</div>
       <div style="display:flex;gap:4px;margin-top:5px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Aktif</span></div></div>
     </div></div>
     <div class="ws-card" style="border-bottom:none"><div class="ws-card-top">
       <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">15</div></div>
       <div class="ws-info"><div class="ws-title">YÜG + P2P Haftalık</div>
-      <div class="ws-sub">15 Nis 2026 · 10:00 – 14:00</div>
+      <div class="ws-">15 Nis 2026 · 10:00 – 14:00</div>
       <div style="margin-top:5px"><span class="pill pill-amber">Yaklaşan</span></div></div>
     </div></div>`;
 }
@@ -133,7 +133,7 @@ function renderHierarchy() {
         <div class="prog-name">${prog.name}</div>
         <div class="prog-meta">${progProjects.length} proje · ${phases.length} faz · ${isPaketleri.length} iş paketi · ${gorevler.length} görev</div>
       </div>
-      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="showAddProjectModal()">+ Proje Ekle</button>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="()">+ Proje Ekle</button>
     </div>
 
     <!-- Projeler -->
@@ -142,7 +142,7 @@ function renderHierarchy() {
         `<div class="empty-state">
           <div class="empty-icon">📋</div>
           <div class="empty-title">Henüz proje yok</div>
-          <button class="btn btn-primary" onclick="showAddProjectModal()">+ Proje Ekle</button>
+          <button class="btn btn-primary" onclick="()">+ Proje Ekle</button>
         </div>`}
     </div>`;
 }
@@ -362,6 +362,10 @@ function showAddProjectModal() {
     <div class="modal-body">
       <div class="form-group"><label>Proje Adı *</label><input id="m-proj-name" class="form-input" placeholder="Örn: Yeni Ürün Geliştirme"></div>
       <div class="form-group"><label>Açıklama</label><textarea id="m-proj-desc" class="form-input" rows="2"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label>Başlangıç</label><input id="m-proj-start" type="date" class="form-input"></div>
+        <div class="form-group"><label>Bitiş</label><input id="m-proj-end" type="date" class="form-input"></div>
+      </div>
       <div class="form-group"><label>Durum</label>
         <select id="m-proj-rag" class="form-input">
           <option value="green">Yolunda</option>
@@ -372,10 +376,10 @@ function showAddProjectModal() {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="submitAddProject()">Kaydet</button>
+      <button class="btn btn-primary" onclick="()">Kaydet</button>
     </div>`);
 }
-async function submitAddProject() {
+async function () {
   const name = document.getElementById('m-proj-name').value.trim();
   if (!name) { toast('Proje adı zorunlu', 'error'); return; }
   const result = await createProject({
@@ -403,10 +407,10 @@ function showAddPhaseModal(projectId) {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="submitAddPhase('${projectId}')">Kaydet</button>
+      <button class="btn btn-primary" onclick="mitAddPhase('${projectId}')">Kaydet</button>
     </div>`);
 }
-async function submitAddPhase(projectId) {
+async function mitAddPhase(projectId) {
   const name = document.getElementById('m-ph-name').value.trim();
   if (!name) { toast('Faz adı zorunlu', 'error'); return; }
   const result = await createPhase({
@@ -452,10 +456,10 @@ function showAddIsPaketiModal(phaseId, projectId) {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="submitAddIsPaketi('${phaseId}')">Kaydet</button>
+      <button class="btn btn-primary" onclick="mitAddIsPaketi('${phaseId}')">Kaydet</button>
     </div>`);
 }
-async function submitAddIsPaketi(phaseId) {
+async function mitAddIsPaketi(phaseId) {
   const title = document.getElementById('m-ip-title').value.trim();
   if (!title) { toast('İş paketi adı zorunlu', 'error'); return; }
   const result = await createIsPaketi({
@@ -571,10 +575,10 @@ function showAddGorevModal(isPaketiId) {
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary" onclick="submitAddGorev('${isPaketiId}')">Kaydet</button>
+      <button class="btn btn-primary" onclick="Gorev('${isPaketiId}')">Kaydet</button>
     </div>`);
 }
-async function submitAddGorev(isPaketiId) {
+async function Gorev(isPaketiId) {
   const title = document.getElementById('m-gv-title').value.trim();
   if (!title) { toast('Görev adı zorunlu', 'error'); return; }
   const result = await createGorev({
