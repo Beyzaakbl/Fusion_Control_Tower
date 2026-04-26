@@ -332,6 +332,8 @@ function renderGanttDashboard() {
   const todayPct  = pct(today);
   const showToday = true; // sabit 12 ay içinde her zaman göster
 
+  const TR_MONTHS = ['OCA','ŞUB','MAR','NİS','MAY','HAZ','TEM','AĞU','EYL','EKİ','KAS','ARA'];
+
   el.innerHTML = `
     <div class="gd-wrap">
 
@@ -342,7 +344,7 @@ function renderGanttDashboard() {
           ${months.map(m => {
             const left  = (m.getMonth() / 12 * 100).toFixed(3);
             const width = (100 / 12).toFixed(3);
-            const label = m.toLocaleDateString('tr-TR',{month:'short'}).toUpperCase();
+            const label = TR_MONTHS[m.getMonth()];
             const isCurrentMonth = m.getMonth() === today.getMonth();
             return `<div class="gd-month ${isCurrentMonth?'gd-month-current':''}" style="left:${left}%;width:${width}%">${label}</div>`;
           }).join('')}
