@@ -349,10 +349,10 @@ textarea.form-input{resize:vertical;min-height:64px}
    DASHBOARD GANTT
 ══════════════════════════════════════ */
 .gd-wrap{overflow-x:auto;overflow-y:visible}
-.gd-header{display:flex;align-items:stretch;margin-bottom:4px;position:relative}
+.gd-header{display:flex;align-items:stretch;margin-bottom:4px;position:relative;height:24px}
 .gd-label-col{width:160px;min-width:160px;flex-shrink:0;padding-right:12px;display:flex;align-items:center;gap:7px}
-.gd-timeline{flex:1;position:relative;min-width:0;height:100%}
-.gd-month{position:absolute;top:0;height:100%;display:flex;align-items:center;padding-left:6px;font-size:10px;font-weight:600;color:var(--text3);border-left:1px solid var(--border);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
+.gd-timeline{flex:1;position:relative;min-width:0}
+.gd-month{position:absolute;top:0;bottom:0;display:flex;align-items:center;padding-left:6px;font-size:10px;font-weight:600;color:var(--text3);border-left:1px solid var(--border);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px;overflow:hidden}
 .gd-month-current{color:var(--flormar);font-weight:700;background:rgba(217,79,122,0.05)}
 .gd-today-head{position:absolute;top:-2px;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--flormar);background:var(--flormar-bg);border:1px solid var(--flormar-mid);border-radius:4px;padding:1px 5px;white-space:nowrap;z-index:4;pointer-events:none}
 .gd-rows{display:flex;flex-direction:column;gap:0}
