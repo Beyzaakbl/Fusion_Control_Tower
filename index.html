@@ -243,7 +243,7 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title">Yönetim Brifing — Hafta 16 · Nisan 2026</span>
-          <button class="btn btn-sm btn-primary" onclick="renderBriefing()">Yenile ↗</button>
+          <button class="btn btn-sm btn-primary" onclick="generateManagementBriefing()">AI ile Yenile ↗</button>
         </div>
         <div class="card-body" id="briefing-content"></div>
       </div>
@@ -294,6 +294,7 @@ textarea.form-input{resize:vertical;min-height:60px}
 <script src="js/supabase.js"></script>
 <script src="js/data.js"></script>
 <script src="js/render.js"></script>
+<script src="js/ai.js"></script>
 <script>
 let sidebarOpen = false;
 
@@ -340,6 +341,16 @@ function navigate(page, el) {
 
 // Uygulama başlat
 loadAllData().then(() => updateBadges());
+  function analyzeWorkshopDemo(id) {
+  const notes = document.getElementById('ws-notes-' + id)?.value?.trim();
+  if (!notes) { toast('Önce notları girin', 'error'); return; }
+  if (!window.workshopsData) window.workshopsData = [];
+  const existing = window.workshopsData.findIndex(w => w.id === id);
+  const demoWs = { id, title: 'YÜG Vizyon Çalıştayı #1', notes, project_id: null, date: '08 Nisan 2026' };
+  if (existing >= 0) window.workshopsData[existing] = demoWs;
+  else window.workshopsData.push(demoWs);
+  generateWorkshopSummary(id);
+}
 </script>
 </body>
 </html>
