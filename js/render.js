@@ -954,7 +954,8 @@ function renderResources() {
     const ini=r.name.replace('.',' ').split(' ').map(w=>w[0]).join('');
     return `<div class="res-row">
       <div class="avatar" style="background:${bg};color:${c}">${ini}</div>
-      <div style="min-width:90px"><div style="font-size:12px;font-weight:500">${r.name}</div><div style="font-size:10px;color:var(--text3)">${r.role}</div></div>
+      <div style="min-width:90px"><div style="font-size:12px;font-weight:500">${r.team || r.name}</div>
+<div style="font-size:10px;color:var(--text3)">${r.name} · ${r.role}</div>
       <div class="cap-track"><div class="cap-fill" style="width:${r.load}%;background:${c}"></div></div>
       <div style="min-width:36px;text-align:right;font-size:12px;font-weight:600;color:${c}">${r.load}%</div>
       <div style="min-width:100px;text-align:right">${(r.projects||[]).map(p=>`<span class="tag">${p}</span>`).join('')}</div>
