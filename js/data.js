@@ -6,19 +6,21 @@ let isPaketleri = [];
 let gorevler = [];
 let risks = [];
 let resources = [];
+let workshops = [];
 
 // ── VERİ YÜKLE ──
 async function loadAllData() {
   try {
     showLoading(true);
-    const [pg, pr, ph, ip, gv, ri, re] = await Promise.all([
-      supabaseFetch('programs'),
-      supabaseFetch('projects'),
-      supabaseFetch('phases'),
-      supabaseFetch('is_paketleri'),
-      supabaseFetch('gorevler'),
-      supabaseFetch('risks'),
-      supabaseFetch('resources')
+    const [pg, pr, ph, ip, gv, ri, re, ws] = await Promise.all([
+        supabaseFetch('programs'),
+        supabaseFetch('projects'),
+        supabaseFetch('phases'),
+        supabaseFetch('is_paketleri'),
+        supabaseFetch('gorevler'),
+        supabaseFetch('risks'),
+        supabaseFetch('resources'),
+        supabaseFetch('workshops')
     ]);
     programs = pg;
     projects = pr;
@@ -27,6 +29,7 @@ async function loadAllData() {
     gorevler = gv;
     risks = ri;
     resources = re;
+    workshops = ws;
     showLoading(false);
     renderDashboard();
     updateBadges();
