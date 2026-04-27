@@ -1037,17 +1037,159 @@ function renderBriefing() {
 }
 
 // ── WORKSHOPS ──
+// ── WORKSHOPS ──
 function renderWorkshops() {
-  const el = document.getElementById('ws-upcoming-grid');
-  if (!el) return;
-  el.innerHTML = workshopsUpcoming.map(w=>`
-    <div class="card"><div class="card-body">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <span class="pill pill-amber">Yaklaşan</span>
-        <span style="font-size:11px;color:var(--text3)">${w.d} · ${w.t}</span>
-      </div>
-      <div style="font-weight:600;font-size:13px;margin-bottom:2px">${w.n}</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${w.p}</div>
-      <button class="btn btn-sm btn-primary">Teams Notu Hazırla</button>
-    </div></div>`).join('');
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  const past = workshops.filter(w => {
+    if (!w.end_time) return false;
+    return new Date(w.end_time) < now;
+  });
+  const today = workshops.filter(w => {
+    if (!w.start_time) return false;
+    return w.start_time.slice(0, 10) === todayStr;
+  });
+  const upcoming = workshops.filter(w => {
+    if (!w.start_time) return false;
+    return new Date(w.start_time) > now && w.start_time.slice(0, 10) !== todayStr;
+  });
+
+  const tabs = document.getElementById('ws-tabs');
+  const body = document.getElementById('ws-body');
+  if (!tabs || !body) return;
+
+  let activeTab = tabs.querySelector('.tab.active')?.dataset?.tab || 'upcoming';
+
+  tabs.innerHTML = `
+    <div class="tab ${activeTab === 'upcoming' ? 'active' : ''}" data-tab="upcoming" onclick="wsTab('upcoming',this)">
+      Yaklaşan <span class="nav-badge" style="margin-left:4px">${upcoming.length}</span>
+    </div>
+    <div class="tab ${activeTab === 'today' ? 'active' : ''}" data-tab="today" onclick="wsTab('today',this)">
+      Bugün <span class="nav-badge" style="margin-left:4px">${today.length}</span>
+    </div>
+    <div class="tab ${activeTab === 'past' ? 'active' : ''}" data-tab="past" onclick="wsTab('past',this)">
+      Geçmiş <span class="nav-badge" style="margin-left:4px">${past.length}</span>
+    </div>`;
+
+  const listMap = { upcoming, today, past };
+  renderWsTab(listMap[activeTab] || [], body);
 }
+
+function wsTab(tab, el) {
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  document.querySelectorAll('#ws-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  el.dataset.tab = tab;
+
+  const past = workshops.filter(w => w.end_time && new Date(w.end_time) < now);
+  const today = workshops.filter(w => w.start_time && w.start_time.slice(0, 10) === todayStr);
+  const upcoming = workshops.filter(w => w.start_time && new Date(w.start_time) > now && w.start_time.slice(0, 10) !== todayStr);
+
+  const listMap = { upcoming, today, past };
+  renderWsTab(listMap[tab] || [], document.getElementById('ws-body'));
+}
+
+function renderWsTab(list, el) {
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Bu kategoride çalıştay yok</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(w => wsCard(w)).join('');
+}
+
+function wsCard(w) {
+  const project = projects.find(p => p.id === w.project_id);
+  const start = w.start_time ? new Date(w.start_time) : null;
+  const dateStr = start ? start.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+  const timeStr = start ? start.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '';
+  const monthStr = start ? start.toLocaleDateString('tr-TR', { month: 'short' }).toUpperCase() : '—';
+  const dayStr = start ? start.getDate() : '—';
+
+  const hasNotes = w.notes_raw?.trim();
+  const hasSummary = w.summary?.trim();
+
+  const decisionsArr = Array.isArray(w.decisions) ? w.decisions : [];
+  const questionsArr = Array.isArray(w.open_questions) ? w.open_questions : [];
+  const tasksArr = Array.isArray(w.tasks) ? w.tasks : [];
+
+  const section = (title, items, color) => {
+    if (!items?.length) return '';
+    return `
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;color:${color};margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${title}</div>
+        ${items.map(i => `<div style="font-size:12px;color:var(--text);padding:3px 0 3px 10px;border-left:2px solid ${color}20">${i}</div>`).join('')}
+      </div>`;
+  };
+
+  return `
+    <div class="card" style="margin-bottom:10px">
+      <div class="ws-card">
+        <div class="ws-card-top">
+          <div class="ws-date-block">
+            <div class="ws-day">${monthStr}</div>
+            <div class="ws-num">${dayStr}</div>
+          </div>
+          <div class="ws-info" style="flex:1">
+            <div class="ws-title">${w.title}</div>
+            <div class="ws-sub">${timeStr}${w.organizer ? ' · ' + w.organizer : ''}${project ? ' · ' + project.name : ''}</div>
+            <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">
+              ${project ? `<span class="tag">${project.name}</span>` : ''}
+              ${hasSummary ? '<span class="pill pill-purple">AI Analiz Edildi</span>' : ''}
+              ${hasNotes && !hasSummary ? '<span class="pill pill-amber">Not Var</span>' : ''}
+            </div>
+          </div>
+        </div>
+
+        ${hasSummary ? `
+          <div style="background:var(--purple-bg);border:1px solid var(--purple-mid);border-radius:8px;padding:14px;margin-top:12px">
+            <p style="font-size:12px;color:var(--text);line-height:1.6;margin:0 0 10px">${w.summary}</p>
+            ${section('Kararlar', decisionsArr, 'var(--purple)')}
+            ${section('Açık Sorular', questionsArr, 'var(--amber)')}
+            ${section('Görevler', tasksArr, 'var(--teal)')}
+          </div>` : ''}
+
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Toplantı Notu</div>
+          <textarea
+            id="ws-note-${w.id}"
+            class="form-input"
+            rows="3"
+            placeholder="Toplantı notlarını buraya girin veya Copilot özetini yapıştırın..."
+            style="width:100%;font-size:12px;box-sizing:border-box"
+          >${w.notes_raw || ''}</textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-sm" onclick="saveWorkshopNote('${w.id}')">Kaydet</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveWorkshopNote(id) {
+  const el = document.getElementById('ws-note-' + id);
+  if (!el) return;
+  const notes = el.value.trim();
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/workshops?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ notes_raw: notes, updated_at: new Date().toISOString() })
+  });
+
+  if (res.ok) {
+    const w = workshops.find(x => x.id === id);
+    if (w) w.notes_raw = notes;
+    toast('Not kaydedildi ✓');
+  } else {
+    toast('Kayıt başarısız', 'error');
+  }
+}
+
