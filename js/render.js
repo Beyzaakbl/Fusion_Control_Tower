@@ -92,7 +92,7 @@ function renderDashboard() {
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Açık risk yok ✓</div>';
 
-  renderGanttDashboard();
+  renderDashboard();
 
   const wm = document.getElementById('ws-mini');
   if (wm) wm.innerHTML = `
@@ -286,22 +286,22 @@ function renderGorevRow(g) {
     </div>`;
 }
 
-// ── DASHBOARD GANTT ──
-function renderGanttDashboard() {
-  const el = document.getElementById('gantt-dashboard');
+// ── DASHBOARD  ──
+function renderDashboard() {
+  const el = document.getElementById('-dashboard');
   if (!el) return;
 
   const projs = projects.filter(p => p.start_date && p.end_date)
                         .sort((a,b) => new Date(a.start_date) - new Date(b.start_date));
 
   // Bugün pill
-  const todayPillEl = document.getElementById('gantt-today-pill');
+  const todayPillEl = document.getElementById('-today-pill');
   const todayLabel = new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
   if (todayPillEl) todayPillEl.textContent = '📅 ' + todayLabel;
 
   if (!projs.length) {
     el.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:12px">
-      Gantt için projelere başlangıç ve bitiş tarihi ekleyin —
+       için projelere başlangıç ve bitiş tarihi ekleyin —
       <span class="h-link" onclick="navigate('hierarchy',null)" style="color:var(--flormar);cursor:pointer">Hiyerarşiye git →</span>
     </div>`;
     return;
@@ -392,16 +392,16 @@ function renderGanttDashboard() {
     </div>`;
 }
 
-// ── GANTT (ayrı sayfa) ──
-function renderGantt() {
-  const el = document.getElementById('gantt-body');
+// ──  (ayrı sayfa) ──
+function render() {
+  const el = document.getElementById('-body');
   if (!el) return;
 
   const projs = projects.filter(p => p.start_date && p.end_date);
   if (!projs.length) {
     el.innerHTML = `<div class="empty-state">
       <div class="empty-icon">📅</div>
-      <div class="empty-title">Gantt için proje tarihleri gerekli</div>
+      <div class="empty-title"> için proje tarihleri gerekli</div>
       <div class="empty-text">Program Hiyerarşisi sayfasından projelere başlangıç ve bitiş tarihi ekleyin.</div>
       <button class="btn btn-primary" onclick="navigate('hierarchy',null)">Hiyerarşiye Git →</button>
     </div>`;
@@ -436,26 +436,26 @@ function renderGantt() {
   const ragColor = r => r==='green'?'#639922':r==='amber'?'#ba7517':'#e24b4a';
 
   el.innerHTML = `
-    <div class="gantt-wrap">
+    <div class="-wrap">
       <!-- Ay başlıkları -->
-      <div class="gantt-header">
-        <div class="gantt-label-col"></div>
-        <div class="gantt-timeline" style="position:relative">
+      <div class="-header">
+        <div class="-label-col"></div>
+        <div class="-timeline" style="position:relative">
           ${months.map(m => {
             const mStart  = new Date(m.getFullYear(), m.getMonth(), 1);
             const mEnd    = new Date(m.getFullYear(), m.getMonth()+1, 0);
             const left    = Math.max(0, (mStart - minDate)/86400000/totalDays*100);
             const width   = Math.min(100-left, (Math.min(mEnd,maxDate)-Math.max(mStart,minDate))/86400000/totalDays*100);
-            return `<div class="gantt-month" style="left:${left}%;width:${width}%">
+            return `<div class="-month" style="left:${left}%;width:${width}%">
               ${m.toLocaleDateString('tr-TR',{month:'short',year:'2-digit'})}
             </div>`;
           }).join('')}
-          ${showToday ? `<div class="gantt-today-header" style="left:${todayPct}%">Bugün</div>` : ''}
+          ${showToday ? `<div class="-today-header" style="left:${todayPct}%">Bugün</div>` : ''}
         </div>
       </div>
 
       <!-- Proje satırları -->
-      <div class="gantt-rows">
+      <div class="-rows">
         ${projs.map(p => {
           const s    = new Date(p.start_date);
           const e    = new Date(p.end_date);
@@ -467,17 +467,17 @@ function renderGantt() {
           const color = ragColor(p.rag);
 
           return `
-            <div class="gantt-row">
-              <div class="gantt-label-col">
-                <div class="gantt-proj-dot" style="background:${color}"></div>
-                <div class="gantt-proj-name">${p.name}</div>
+            <div class="-row">
+              <div class="-label-col">
+                <div class="-proj-dot" style="background:${color}"></div>
+                <div class="-proj-name">${p.name}</div>
               </div>
-              <div class="gantt-timeline" style="position:relative">
-                ${showToday ? `<div class="gantt-today-line" style="left:${todayPct}%"></div>` : ''}
-                <div class="gantt-bar-wrap" style="left:${left}%;width:${w}%">
-                  <div class="gantt-bar" style="background:${color}" title="${p.name}: ${formatDate(p.start_date)} → ${formatDate(p.end_date)}">
-                    <div class="gantt-bar-fill" style="width:${pct}%;background:rgba(255,255,255,.35)"></div>
-                    <span class="gantt-bar-label">${p.name} · %${pct}</span>
+              <div class="-timeline" style="position:relative">
+                ${showToday ? `<div class="-today-line" style="left:${todayPct}%"></div>` : ''}
+                <div class="-bar-wrap" style="left:${left}%;width:${w}%">
+                  <div class="-bar" style="background:${color}" title="${p.name}: ${formatDate(p.start_date)} → ${formatDate(p.end_date)}">
+                    <div class="-bar-fill" style="width:${pct}%;background:rgba(255,255,255,.35)"></div>
+                    <span class="-bar-label">${p.name} · %${pct}</span>
                   </div>
                 </div>
               </div>
@@ -486,7 +486,7 @@ function renderGantt() {
       </div>
 
       <!-- Bugün etiketi -->
-      ${showToday ? `<div class="gantt-today-badge" style="left:calc(200px + ${todayPct}% * (100% - 200px) / 100)">
+      ${showToday ? `<div class="-today-badge" style="left:calc(200px + ${todayPct}% * (100% - 200px) / 100)">
         📅 ${today.toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'})}
       </div>` : ''}
     </div>`;
@@ -617,8 +617,8 @@ async function submitEditProject(id) {
     toast('Proje güncellendi ✓');
     closeModal();
     renderHierarchy();
-    renderGantt();
-    renderGanttDashboard();
+    render();
+    renderDashboard();
   }
 }
 
@@ -950,27 +950,205 @@ function filterAction(f, el) {
 }
 
 // ── KAYNAKLAR ──
+// ── KAYNAKLAR & GANTT ──
 function renderResources() {
+  const teamFilter = document.getElementById('gantt-filter-team')?.value || 'all';
+  const projectFilter = document.getElementById('gantt-filter-project')?.value || 'all';
+
+  // Filtreleri doldur
+  const teamSelect = document.getElementById('gantt-filter-team');
+  const projectSelect = document.getElementById('gantt-filter-project');
+  if (teamSelect && teamSelect.options.length <= 1) {
+    const teams = [...new Set(resources.map(r => r.team).filter(Boolean))];
+    teams.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      teamSelect.appendChild(o);
+    });
+  }
+  if (projectSelect && projectSelect.options.length <= 1) {
+    projects.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = p.name;
+      projectSelect.appendChild(o);
+    });
+  }
+
+  // Kapasite listesi
   const el = document.getElementById('resource-list');
+  if (el) {
+    let filteredRes = resources;
+    if (teamFilter !== 'all') filteredRes = resources.filter(r => r.team === teamFilter);
+    if (!filteredRes.length) {
+      el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Ekip bulunamadı</div>';
+    } else {
+      el.innerHTML = filteredRes.map(r => {
+        const h = r.load > 85, m = r.load > 65;
+        const c = h ? 'var(--red)' : m ? 'var(--amber)' : 'var(--green)';
+        const bg = h ? 'var(--red-bg)' : m ? 'var(--amber-bg)' : 'var(--green-bg)';
+        const ini = r.name.replace('.', ' ').split(' ').map(w => w[0]).join('');
+        return `<div class="res-row">
+          <div class="avatar" style="background:${bg};color:${c}">${ini}</div>
+          <div style="min-width:200px">
+            <div style="font-size:12px;font-weight:500">${r.team || r.name}</div>
+            <div style="font-size:10px;color:var(--text3)">${r.name} · ${r.role}</div>
+          </div>
+          <div class="cap-track"><div class="cap-fill" style="width:${r.load}%;background:${c}"></div></div>
+          <div style="min-width:36px;text-align:right;font-size:12px;font-weight:600;color:${c}">${r.load}%</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Gantt
+  renderGantt(teamFilter, projectFilter);
+}
+
+function renderGantt(teamFilter, projectFilter) {
+  const el = document.getElementById('resource-gantt');
   if (!el) return;
-  if (!resources.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Kaynak bulunamadı</div></div>';
+
+  // Tarih aralığını hesapla
+  const allDates = isPaketleri
+    .filter(ip => ip.start_date && ip.due_date)
+    .flatMap(ip => [new Date(ip.start_date), new Date(ip.due_date)]);
+
+  if (!allDates.length) {
+    el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Tarihi olan iş paketi bulunamadı</div>';
     return;
   }
-  el.innerHTML = resources.map(r => {
-    const h=r.load>85, m=r.load>65;
-    const c=h?'var(--red)':m?'var(--amber)':'var(--green)';
-    const bg=h?'var(--red-bg)':m?'var(--amber-bg)':'var(--green-bg)';
-    const ini=r.name.replace('.',' ').split(' ').map(w=>w[0]).join('');
-    return `<div class="res-row">
-      <div class="avatar" style="background:${bg};color:${c}">${ini}</div>
-      <div style="min-width:90px"><div style="font-size:12px;font-weight:500">${r.team || r.name}</div>
-<div style="font-size:10px;color:var(--text3)">${r.name} · ${r.role}</div>
-      <div class="cap-track"><div class="cap-fill" style="width:${r.load}%;background:${c}"></div></div>
-      <div style="min-width:36px;text-align:right;font-size:12px;font-weight:600;color:${c}">${r.load}%</div>
-      <div style="min-width:100px;text-align:right">${(r.projects||[]).map(p=>`<span class="tag">${p}</span>`).join('')}</div>
+
+  const minDate = new Date(Math.min(...allDates));
+  const maxDate = new Date(Math.max(...allDates));
+  minDate.setDate(1);
+  maxDate.setMonth(maxDate.getMonth() + 1);
+  maxDate.setDate(1);
+
+  const totalDays = Math.ceil((maxDate - minDate) / 86400000);
+
+  // Ayları hesapla
+  const months = [];
+  const cursor = new Date(minDate);
+  while (cursor < maxDate) {
+    months.push({
+      label: cursor.toLocaleDateString('tr-TR', { month: 'short', year: 'numeric' }),
+      days: new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate(),
+      offset: Math.ceil((cursor - minDate) / 86400000)
+    });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  // Ekipleri filtrele
+  let filteredResources = resources.filter(r => r.team);
+  if (teamFilter !== 'all') filteredResources = filteredResources.filter(r => r.team === teamFilter);
+
+  // İş paketlerini hazırla
+  const getPackages = (team) => {
+    return isPaketleri.filter(ip => {
+      if (ip.owner !== team) return false;
+      if (!ip.start_date || !ip.due_date) return false;
+      if (projectFilter !== 'all') {
+        const ph = phases.find(x => x.id === ip.phase_id);
+        if (!ph || ph.project_id !== projectFilter) return false;
+      }
+      return true;
+    });
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayOffset = Math.ceil((today - minDate) / 86400000);
+
+  const LABEL_W = 160;
+  const ROW_H = 36;
+  const HEADER_H = 32;
+
+  let html = `<div style="min-width:700px">`;
+
+  // Header — aylar
+  html += `<div style="display:flex;margin-left:${LABEL_W}px;border-bottom:1px solid var(--border)">`;
+  months.forEach(m => {
+    const w = (m.days / totalDays) * 100;
+    html += `<div style="flex:${m.days};text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:6px 0;border-right:1px solid var(--border)">${m.label}</div>`;
+  });
+  html += `</div>`;
+
+  // Bugün çizgisi pozisyonu
+  const todayPct = todayOffset >= 0 ? (todayOffset / totalDays * 100).toFixed(2) : null;
+
+  // Ekip satırları
+  filteredResources.forEach(r => {
+    const packages = getPackages(r.team);
+
+    html += `
+      <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--border);min-height:${ROW_H}px">
+        <div style="width:${LABEL_W}px;flex-shrink:0;padding:8px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center">
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${r.team}</div>
+          <div style="font-size:10px;color:var(--text3)">${r.name}</div>
+        </div>
+        <div style="flex:1;position:relative;min-height:${Math.max(ROW_H, packages.length * 28 + 8)}px">`;
+
+    // Bugün çizgisi
+    if (todayPct && todayOffset >= 0 && todayOffset <= totalDays) {
+      html += `<div style="position:absolute;left:${todayPct}%;top:0;bottom:0;width:1px;background:var(--red);opacity:0.5;z-index:1"></div>`;
+    }
+
+    // Ay grid çizgileri
+    months.forEach(m => {
+      const pct = (m.offset / totalDays * 100).toFixed(2);
+      html += `<div style="position:absolute;left:${pct}%;top:0;bottom:0;width:1px;background:var(--border);opacity:0.5"></div>`;
+    });
+
+    // İş paketi barları
+    packages.forEach((ip, i) => {
+      const start = new Date(ip.start_date);
+      const end = new Date(ip.due_date);
+      const startOffset = Math.ceil((start - minDate) / 86400000);
+      const duration = Math.ceil((end - start) / 86400000) + 1;
+      const leftPct = (startOffset / totalDays * 100).toFixed(2);
+      const widthPct = (duration / totalDays * 100).toFixed(2);
+
+      const proj = (() => {
+        const ph = phases.find(x => x.id === ip.phase_id);
+        return ph ? projects.find(x => x.id === ph.project_id) : null;
+      })();
+
+      const isLate = ip.status !== 'done' && new Date(ip.due_date) < today;
+      const isDone = ip.status === 'done';
+      const barColor = isDone ? 'var(--green)' : isLate ? 'var(--red)' : 'var(--purple)';
+
+      const top = 6 + i * 28;
+
+      html += `
+        <div title="${ip.title} · ${proj?.name || ''} · ${ip.start_date} → ${ip.due_date}"
+          style="position:absolute;left:${leftPct}%;width:${widthPct}%;top:${top}px;height:20px;
+                 background:${barColor};opacity:0.85;border-radius:4px;
+                 display:flex;align-items:center;padding:0 6px;box-sizing:border-box;
+                 cursor:default;overflow:hidden;z-index:2">
+          <span style="font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            ${ip.title}${proj ? ' · ' + proj.name : ''}
+          </span>
+        </div>`;
+    });
+
+    if (!packages.length) {
+      html += `<div style="padding:10px 12px;font-size:11px;color:var(--text3)">Bu ekibe atanmış iş paketi yok</div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  // Lejant
+  html += `
+    <div style="display:flex;gap:16px;padding:10px 12px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--purple)"></div><span style="font-size:11px;color:var(--text3)">Devam ediyor</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--green)"></div><span style="font-size:11px;color:var(--text3)">Tamamlandı</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--red)"></div><span style="font-size:11px;color:var(--text3)">Gecikmiş</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:1px;height:12px;background:var(--red)"></div><span style="font-size:11px;color:var(--text3)">Bugün</span></div>
     </div>`;
-  }).join('');
+
+  html += `</div>`;
+  el.innerHTML = html;
 }
 
 // ── RİSKLER ──
