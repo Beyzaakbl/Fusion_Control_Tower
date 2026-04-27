@@ -201,14 +201,38 @@
     <div id="ws-body" style="margin-top:12px"></div>
   </div>
 
+<!-- KAYNAKLAR -->
+<div id="page-resources" class="page">
 
-    <!-- KAYNAKLAR -->
-    <div id="page-resources" class="page">
-      <div class="card">
-        <div class="card-header"><span class="card-title">IT Ekibi — Kapasite Durumu</span></div>
-        <div id="resource-list"></div>
+  <!-- FİLTRE BARI -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="form-group" style="margin:0;min-width:180px">
+        <select id="gantt-filter-team" class="form-input" onchange="renderResources()">
+          <option value="all">Tüm Ekipler</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0;min-width:180px">
+        <select id="gantt-filter-project" class="form-input" onchange="renderResources()">
+          <option value="all">Tüm Projeler</option>
+        </select>
       </div>
     </div>
+  </div>
+
+  <!-- KAPASİTE -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-header"><span class="card-title">IT Ekibi — Kapasite Durumu</span></div>
+    <div id="resource-list"></div>
+  </div>
+
+  <!-- GANTT -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Ekip Bazlı İş Paketi Gantt</span></div>
+    <div id="resource-gantt" style="overflow-x:auto"></div>
+  </div>
+
+</div>
 
     <!-- RİSKLER -->
     <div id="page-risks" class="page">
