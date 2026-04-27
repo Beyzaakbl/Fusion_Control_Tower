@@ -663,7 +663,12 @@ function showAddIsPaketiModal(phaseId, projectId) {
       <div class="form-group"><label>İş Paketi Adı *</label><input id="m-ip-title" class="form-input" placeholder="Örn: PLM Aracı Değerlendirme"></div>
       <div class="form-group"><label>Açıklama</label><textarea id="m-ip-desc" class="form-input" rows="2"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label>Sorumlu</label><input id="m-ip-owner" class="form-input" placeholder="Ad Soyad"></div>
+        <div class="form-group"><label>Sorumlu Ekip</label>
+  <select id="m-ip-owner" class="form-input">
+    <option value="">— Seç —</option>
+    ${resources.map(r => `<option value="${r.team}">${r.team} · ${r.name}</option>`).join('')}
+  </select>
+</div>
         <div class="form-group"><label>Öncelik</label>
           <select id="m-ip-priority" class="form-input">
             <option value="high">Yüksek</option>
@@ -714,7 +719,12 @@ function showEditIsPaketiModal(id) {
       <div class="form-group"><label>İş Paketi Adı *</label><input id="m-edit-ip-title" class="form-input" value="${ip.title}"></div>
       <div class="form-group"><label>Açıklama</label><textarea id="m-edit-ip-desc" class="form-input" rows="2">${ip.description||''}</textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label>Sorumlu</label><input id="m-edit-ip-owner" class="form-input" value="${ip.owner||''}"></div>
+        <div class="form-group"><label>Sorumlu Ekip</label>
+  <select id="m-edit-ip-owner" class="form-input">
+    <option value="">— Seç —</option>
+    ${resources.map(r => `<option value="${r.team}" ${ip.owner===r.team?'selected':''}>${r.team} · ${r.name}</option>`).join('')}
+  </select>
+</div>
         <div class="form-group"><label>Öncelik</label>
           <select id="m-edit-ip-priority" class="form-input">
             <option value="high" ${ip.priority==='high'?'selected':''}>Yüksek</option>
