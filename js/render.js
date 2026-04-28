@@ -37,28 +37,28 @@ function formatDate(d) {
 function updateBadges() {
   const late = getLateGorevler();
   const el = id => document.getElementById(id);
-  if (el('badge-projects')) el('badge-projects').textContent = projects.length;
+  if (el('badge-s')) el('badge-s').textContent = s.length;
   if (el('badge-actions')) el('badge-actions').textContent = late.length;
   if (el('urgency-count')) el('urgency-count').textContent = late.length;
   if (el('metric-late-badge')) el('metric-late-badge').textContent = late.length + ' geç';
-  if (el('metric-projects')) el('metric-projects').textContent = projects.length;
+  if (el('metric-s')) el('metric-s').textContent = s.length;
   if (el('metric-packs')) el('metric-packs').textContent = isPaketleri.length;
   const avgLoad = resources.length ? Math.round(resources.reduce((s,r)=>s+r.load,0)/resources.length) : 0;
   if (el('metric-load')) el('metric-load').textContent = avgLoad + '%';
   if (el('metric-load-sub')) el('metric-load-sub').textContent =
     resources.filter(r=>r.load>85).map(r=>r.name).join(' & ') || 'Kapasite normal';
-  const riskProj = projects.filter(p=>p.rag!=='green').length;
-  if (el('metric-projects-sub')) el('metric-projects-sub').textContent =
-    `${projects.length-riskProj} yolunda · ${riskProj} riskli`;
+  const riskProj = s.filter(p=>p.rag!=='green').length;
+  if (el('metric-s-sub')) el('metric-s-sub').textContent =
+    `${s.length-riskProj} yolunda · ${riskProj} riskli`;
 }
 
 // ── DASHBOARD ──
 function renderDashboard() {
   const late = getLateGorevler();
   const pl = document.getElementById('proj-list');
-  if (pl) pl.innerHTML = projects.slice(0,6).map(p => {
-    const ipCount = getProjectIsPaketleri(p.id).length;
-    const gvCount = getProjectGorevler(p.id).length;
+  if (pl) pl.innerHTML = s.slice(0,6).map(p => {
+    const ipCount = getIsPaketleri(p.id).length;
+    const gvCount = getGorevler(p.id).length;
     return `<div class="proj-item" onclick="navigate('hierarchy',null)" style="cursor:pointer">
       <div class="proj-dot" style="background:${p.rag==='green'?'#639922':p.rag==='amber'?'#ba7517':'#e24b4a'}"></div>
       <div class="proj-info">
@@ -92,23 +92,25 @@ function renderDashboard() {
       </div>
     </div>`).join('') || '<div style="padding:16px;font-size:12px;color:var(--text3)">Açık risk yok ✓</div>';
 
-  renderDashboard();
 
-  const wm = document.getElementById('ws-mini');
-  if (wm) wm.innerHTML = `
-    <div class="ws-card"><div class="ws-card-top">
-      <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">08</div></div>
-      <div class="ws-info"><div class="ws-title">YÜG Vizyon Çalıştayı #1</div>
-      <div class="ws-sub">08 Nis 2026 · Tamamlandı · AI Analiz Edildi</div>
-      <div style="display:flex;gap:4px;margin-top:5px"><span class="pill pill-green">Tamamlandı</span><span class="pill pill-purple">AI Aktif</span></div></div>
-    </div></div>
-    <div class="ws-card" style="border-bottom:none"><div class="ws-card-top">
-      <div class="ws-date-block"><div class="ws-day">Nis</div><div class="ws-num">15</div></div>
-      <div class="ws-info"><div class="ws-title">YÜG + P2P Haftalık</div>
-      <div class="ws-sub">15 Nis 2026 · 10:00 – 14:00</div>
-      <div style="margin-top:5px"><span class="pill pill-amber">Yaklaşan</span></div></div>
-    </div></div>`;
-}
+const wm = document.getElementById('ws-mini');
+  if (wm) {
+    const wsSlice = workshops.slice(0, 2);
+    wm.innerHTML = wsSlice.length ? wsSlice.map(w => {
+      const start = w.start_time ? new Date(w.start_time) : null;
+      const monthStr = start ? start.toLocaleDateString('tr-TR', {month:'short'}).toUpperCase() : '—';
+      const dayStr = start ? start.getDate() : '—';
+      const dateStr = start ? start.toLocaleDateString('tr-TR', {day:'2-digit', month:'short', year:'numeric'}) : '—';
+      return `<div class="ws-card"><div class="ws-card-top">
+        <div class="ws-date-block"><div class="ws-day">${monthStr}</div><div class="ws-num">${dayStr}</div></div>
+        <div class="ws-info">
+          <div class="ws-title">${w.title}</div>
+          <div class="ws-sub">${dateStr}${w.organizer ? ' · ' + w.organizer : ''}</div>
+          <div style="margin-top:5px">${w.summary ? '<span class="pill pill-purple">AI Analiz Edildi</span>' : '<span class="pill pill-amber">Not Bekleniyor</span>'}</div>
+        </div>
+      </div></div>`;
+    }).join('') : '<div style="padding:16px;font-size:12px;color:var(--text3)">Çalıştay bulunamadı</div>';
+  }
 
 // ── PROGRAM HİYERARŞİSİ ──
 function renderHierarchy() {
@@ -119,13 +121,13 @@ function renderHierarchy() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-title">Program bulunamadı</div></div>';
     return;
   }
-  const progProjects = [...projects].sort((a,b)=>a.order_num-b.order_num);
+  const progs = [...s].sort((a,b)=>a.order_num-b.order_num);
   el.innerHTML = `
     <div class="prog-header">
       <div class="prog-icon">F</div>
       <div class="prog-info">
         <div class="prog-name">${prog.name}</div>
-        <div class="prog-meta">${progProjects.length} proje · ${phases.length} faz · ${isPaketleri.length} iş paketi · ${gorevler.length} görev</div>
+        <div class="prog-meta">${progs.length} proje · ${phases.length} faz · ${isPaketleri.length} iş paketi · ${gorevler.length} görev</div>
       </div>
       <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="showAddProjectModal()">+ Proje Ekle</button>
     </div>
@@ -180,7 +182,7 @@ function renderProjectCard(p) {
 function renderPhaseBlock(ph, project) {
   const phIsPaketleri = getPhaseIsPaketleri(ph.id);
   const phGorevler = phIsPaketleri.flatMap(ip=>getIsPaketiGorevler(ip.id));
-  const doneCount = phGorevler.filter(g=>g.status==='done').length;
+  const doneCount = phGorevler.filter(g=>g.==='done').length;
   return `
     <div class="h-phase-block">
       <div class="h-phase-header" onclick="togglePhaseBlock('${ph.id}')">
@@ -210,7 +212,7 @@ function renderPhaseBlock(ph, project) {
 
 function renderIsPaketiBlock(ip) {
   const ipGorevler = getIsPaketiGorevler(ip.id);
-  const doneCount = ipGorevler.filter(g=>g.status==='done').length;
+  const doneCount = ipGorevler.filter(g=>g.==='done').length;
   const progress = ipGorevler.length ? Math.round((doneCount/ipGorevler.length)*100) : 0;
   return `
     <div class="h-ip-block">
@@ -232,7 +234,7 @@ function renderIsPaketiBlock(ip) {
           </div>
         </div>
         <div class="h-row-right">
-          ${statusPill(ip.status)}
+          ${Pill(ip.)}
           ${priorityPill(ip.priority)}
           <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showAddGorevModal('${ip.id}')">+ Görev</button>
           <div class="h-actions">
@@ -256,8 +258,8 @@ function renderIsPaketiBlock(ip) {
 }
 
 function renderGorevRow(g) {
-  const done = g.status==='done';
-  const late = g.status!=='done' && g.due_date && new Date(g.due_date)<new Date();
+  const done = g.==='done';
+  const late = g.!=='done' && g.due_date && new Date(g.due_date)<new Date();
   return `
     <div class="h-gorev-row ${done?'h-gorev-done':''}" id="gorev-row-${g.id}">
       <div class="h-row-left">
@@ -268,7 +270,7 @@ function renderGorevRow(g) {
         <div>
           <div class="h-gorev-title ${done?'done':''}">${g.title}</div>
           <div class="h-gorev-meta">
-            ${statusPill(g.status)}
+            ${Pill(g.)}
             ${priorityPill(g.priority)}
             ${g.due_date?`<span class="action-due ${late?'late':'ok'}">${late?'⚠ ':''}${formatDate(g.due_date)}</span>`:''}
             <span style="font-size:11px;color:var(--text3)">${g.owner||'Atanmamış'}</span>
@@ -356,7 +358,7 @@ function renderDashboard() {
       <div class="gd-rows">
         ${projs.map((p, idx) => {
           const projGorevler = getProjectGorevler(p.id);
-          const done         = projGorevler.filter(g=>g.status==='done').length;
+          const done         = projGorevler.filter(g=>g.==='done').length;
           const completePct  = projGorevler.length ? Math.round(done/projGorevler.length*100) : 0;
           const clr          = flormarColors[idx % flormarColors.length];
           const barLeft      = pct(p.start_date);
@@ -462,7 +464,7 @@ function render() {
           const left = ((s - minDate)/86400000/totalDays*100).toFixed(2);
           const w    = ((e - s)/86400000/totalDays*100).toFixed(2);
           const projGorevler = getProjectGorevler(p.id);
-          const done = projGorevler.filter(g=>g.status==='done').length;
+          const done = projGorevler.filter(g=>g.==='done').length;
           const pct  = projGorevler.length ? Math.round(done/projGorevler.length*100) : 0;
           const color = ragColor(p.rag);
 
@@ -682,7 +684,7 @@ function showAddIsPaketiModal(phaseId, projectId) {
         <div class="form-group"><label>Bitiş</label><input id="m-ip-due" type="date" class="form-input"></div>
       </div>
       <div class="form-group"><label>Durum</label>
-        <select id="m-ip-status" class="form-input">
+        <select id="m-ip-" class="form-input">
           <option value="todo" selected>To Do</option>
           <option value="inprogress">In Progress</option>
           <option value="done">Done</option>
@@ -705,7 +707,7 @@ async function submitAddIsPaketi(phaseId) {
     priority: document.getElementById('m-ip-priority').value,
     start_date: document.getElementById('m-ip-start').value || null,
     due_date: document.getElementById('m-ip-due').value || null,
-    status: document.getElementById('m-ip-status').value
+    : document.getElementById('m-ip-').value
   });
   if (result) { toast('İş paketi eklendi ✓'); closeModal(); renderHierarchy(); }
 }
@@ -738,10 +740,10 @@ function showEditIsPaketiModal(id) {
         <div class="form-group"><label>Bitiş</label><input id="m-edit-ip-due" type="date" class="form-input" value="${ip.due_date||''}"></div>
       </div>
       <div class="form-group"><label>Durum</label>
-        <select id="m-edit-ip-status" class="form-input">
-          <option value="todo" ${ip.status==='todo'?'selected':''}>To Do</option>
-          <option value="inprogress" ${ip.status==='inprogress'?'selected':''}>In Progress</option>
-          <option value="done" ${ip.status==='done'?'selected':''}>Done</option>
+        <select id="m-edit-ip-" class="form-input">
+          <option value="todo" ${ip.==='todo'?'selected':''}>To Do</option>
+          <option value="inprogress" ${ip.==='inprogress'?'selected':''}>In Progress</option>
+          <option value="done" ${ip.==='done'?'selected':''}>Done</option>
         </select>
       </div>
     </div>
@@ -760,7 +762,7 @@ async function submitEditIsPaketi(id) {
     priority: document.getElementById('m-edit-ip-priority').value,
     start_date: document.getElementById('m-edit-ip-start').value || null,
     due_date: document.getElementById('m-edit-ip-due').value || null,
-    status: document.getElementById('m-edit-ip-status').value
+    : document.getElementById('m-edit-ip-').value
   };
   const ok = await supabaseUpdate('is_paketleri', id, data);
   if (ok) {
