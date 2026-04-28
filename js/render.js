@@ -948,32 +948,45 @@ function renderResources() {
 
   const teamSelect = document.getElementById('gantt-filter-team');
   const projectSelect = document.getElementById('gantt-filter-project');
+
   if (teamSelect && teamSelect.options.length <= 1) {
     const teams = [...new Set(resources.map(r => r.team).filter(Boolean))];
-    teams.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; teamSelect.appendChild(o); });
-  }
-  if (projectSelect && projectSelect.options.length <= 1) {
-    projects.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; projectSelect.appendChild(o); });
+    teams.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      teamSelect.appendChild(o);
+    });
+    // Default: Project Management secili
+    const pmOpt = Array.from(teamSelect.options).find(o => o.value === 'Project Management');
+    if (pmOpt) { teamSelect.value = 'Project Management'; }
   }
 
-  renderGantt(teamFilter, projectFilter);
+  if (projectSelect && projectSelect.options.length <= 1) {
+    projects.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = p.name;
+      projectSelect.appendChild(o);
+    });
+  }
+
+  const tf = document.getElementById('gantt-filter-team')?.value || 'all';
+  const pf = document.getElementById('gantt-filter-project')?.value || 'all';
+  renderGantt(tf, pf);
 }
 
 function renderGantt(teamFilter, projectFilter) {
   const el = document.getElementById('resource-gantt');
   if (!el) return;
 
-  // Proje renk paleti
   const PROJ_COLORS = ['#D94F7A','#4A90D9','#E8923A','#5BA85A','#9B59B6','#E74C3C','#1ABC9C','#F39C12'];
   const projColorMap = {};
   projects.forEach(function(p, i) { projColorMap[p.id] = PROJ_COLORS[i % PROJ_COLORS.length]; });
 
-  // Sabit 12 ay: Ocak - Aralik
   const year = new Date().getFullYear();
   const minDate = new Date(year, 0, 1);
   const maxDate = new Date(year, 11, 31);
   const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
-  const TR_MONTHS = ['OCA','SUB','MAR','NIS','MAY','HAZ','TEM','AGU','EYL','EKI','KAS','ARA'];
+  const TR_MONTHS = ['Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara'];
   const months = Array.from({length:12}, function(_, i) {
     return {
       label: TR_MONTHS[i],
@@ -982,13 +995,14 @@ function renderGantt(teamFilter, projectFilter) {
     };
   });
 
-  // Filtrele
   let filtRes = resources.filter(function(r) { return r.team; });
-  if (teamFilter && teamFilter !== 'all') filtRes = filtRes.filter(function(r) { return r.team === teamFilter; });
+  if (teamFilter && teamFilter !== 'all') {
+    filtRes = filtRes.filter(function(r) { return r.team === teamFilter; });
+  }
 
   const today = new Date(); today.setHours(0,0,0,0);
   const todayOff = Math.ceil((today - minDate) / 86400000);
-  const todayPct = (todayOff / totalDays * 100).toFixed(2);
+  const todayPct = (todayOff / totalDays * 100).toFixed(3);
 
   const getPkgs = function(team) {
     return isPaketleri.filter(function(ip) {
@@ -1001,35 +1015,38 @@ function renderGantt(teamFilter, projectFilter) {
     });
   };
 
-  const LABEL_W = 200;
+  const LW = 200;
   let html = '';
 
   filtRes.forEach(function(r) {
     const pkgs = getPkgs(r.team);
 
-    html += '<div class="card" style="margin-bottom:12px;overflow:hidden">';
+    html += '<div class="rg-block">';
 
-    // Kart baslik
-    html += '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">';
-    html += '<div><div style="font-size:13px;font-weight:600;color:var(--text)">' + r.team + '</div>';
-    html += '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + r.name + ' &middot; Team Lead</div></div>';
-    html += '<div style="font-size:11px;color:var(--text3)">' + pkgs.length + ' is paketi</div>';
+    // Blok baslik
+    html += '<div class="rg-block-header">';
+    html += '<div>';
+    html += '<div class="rg-block-title">' + r.team + '</div>';
+    html += '<div class="rg-block-sub">' + r.name + ' &middot; Team Lead &middot; ' + pkgs.length + ' is paketi</div>';
+    html += '</div>';
     html += '</div>';
 
-    // Gantt icerigi
-    html += '<div style="overflow-x:auto"><div style="min-width:700px">';
+    // Tablo
+    html += '<div class="rg-table-wrap"><table class="rg-table">';
 
-    // Ay baslik satiri
-    html += '<div style="display:flex;border-bottom:1px solid var(--border)">';
-    html += '<div style="width:' + LABEL_W + 'px;flex-shrink:0;padding:6px 12px;border-right:1px solid var(--border)"></div>';
-    html += '<div style="flex:1;display:flex">';
+    // Baslik satiri
+    html += '<thead><tr>';
+    html += '<th class="rg-th-label">TOPIC</th>';
     months.forEach(function(m) {
-      html += '<div style="flex:' + m.days + ';text-align:center;font-size:10px;font-weight:600;color:var(--text2);padding:5px 0;border-right:1px solid var(--border)">' + m.label + '</div>';
+      html += '<th class="rg-th-month" style="width:' + (m.days/totalDays*100).toFixed(3) + '%">' + m.label + '</th>';
     });
-    html += '</div></div>';
+    html += '</tr></thead>';
+
+    // Icerik
+    html += '<tbody>';
 
     if (!pkgs.length) {
-      html += '<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">Bu ekibe atanmis is paketi yok</div>';
+      html += '<tr><td colspan="13" class="rg-empty">Bu ekibe atanmis is paketi yok</td></tr>';
     } else {
       pkgs.forEach(function(ip) {
         const ph = phases.find(function(x){return x.id===ip.phase_id;});
@@ -1040,69 +1057,85 @@ function renderGantt(teamFilter, projectFilter) {
         const e = new Date(ip.due_date);
         const sOff = Math.max(0, Math.ceil((s - minDate) / 86400000));
         const eOff = Math.min(totalDays, Math.ceil((e - minDate) / 86400000));
-        const lp = (sOff / totalDays * 100).toFixed(2);
-        const wp = Math.max(0.5, ((eOff - sOff) / totalDays * 100)).toFixed(2);
-
+        const lp = (sOff / totalDays * 100).toFixed(3);
+        const wp = Math.max(0.5, ((eOff - sOff) / totalDays * 100)).toFixed(3);
         const isLate = ip.status !== 'done' && e < today;
         const isDone = ip.status === 'done';
         const barColor = isDone ? '#5BA85A' : isLate ? '#E74C3C' : projColor;
+        const uid = 'ip-detail-' + ip.id;
 
-        html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:36px">';
+        html += '<tr class="rg-row" onclick="toggleIpDetail(\'' + uid + '\')">';
 
-        // Satir etiketi
-        html += '<div style="width:' + LABEL_W + 'px;flex-shrink:0;padding:6px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center">';
-        html += '<div style="font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ip.title + '</div>';
-        html += '<div style="font-size:10px;color:var(--text3);margin-top:1px">' + (proj ? proj.name : '') + '</div>';
-        html += '</div>';
+        // Etiket sutunu
+        html += '<td class="rg-td-label">';
+        html += '<div class="rg-topic-name">' + ip.title + '</div>';
+        html += '<div class="rg-topic-sub">' + (proj ? proj.name : '') + (r.name ? ' &middot; ' + r.name : '') + '</div>';
+        html += '</td>';
 
-        // Bar alani
-        html += '<div style="flex:1;position:relative;min-height:36px">';
+        // Timeline sutunu (colspan 12, pozisyonlama icin relative div)
+        html += '<td colspan="12" class="rg-td-timeline">';
+        html += '<div class="rg-timeline-inner" style="position:relative;height:36px">';
 
         // Bugün cizgisi
         if (todayOff >= 0 && todayOff <= totalDays) {
-          html += '<div style="position:absolute;left:' + todayPct + '%;top:0;bottom:0;width:2px;background:#D94F7A;opacity:0.7;z-index:3"></div>';
+          html += '<div class="rg-today-line" style="left:' + todayPct + '%"></div>';
         }
 
-        // Ay grid cizgileri
+        // Ay cizgileri
         months.forEach(function(m) {
-          const pct = (m.offset / totalDays * 100).toFixed(2);
-          html += '<div style="position:absolute;left:' + pct + '%;top:0;bottom:0;width:1px;background:var(--border);opacity:0.6"></div>';
+          html += '<div class="rg-grid-line" style="left:' + (m.offset/totalDays*100).toFixed(3) + '%"></div>';
         });
 
         // Bar
-        html += '<div style="position:absolute;left:' + lp + '%;width:' + wp + '%;top:8px;height:20px;background:' + barColor + ';border-radius:4px;display:flex;align-items:center;padding:0 6px;box-sizing:border-box;overflow:hidden;z-index:2" title="' + ip.title + '">';
-        html += '<span style="font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ip.title + '</span>';
+        html += '<div class="rg-bar" style="left:' + lp + '%;width:' + wp + '%;background:' + barColor + '">';
+        html += '<span class="rg-bar-label">' + ip.title + '</span>';
         html += '</div>';
 
-        html += '</div></div>';
+        html += '</div></td>';
+        html += '</tr>';
+
+        // Detay satiri (gizli, tiklayinca acilir)
+        html += '<tr class="rg-detail-row" id="' + uid + '" style="display:none">';
+        html += '<td colspan="13" class="rg-detail-cell">';
+        html += '<div class="rg-detail-content">';
+        html += '<div class="rg-detail-item"><span class="rg-detail-key">Durum</span><span class="rg-detail-val">' + (isDone ? 'Tamamlandi' : isLate ? 'Gecikmis' : 'Devam Ediyor') + '</span></div>';
+        html += '<div class="rg-detail-item"><span class="rg-detail-key">Baslangic</span><span class="rg-detail-val">' + (ip.start_date || '—') + '</span></div>';
+        html += '<div class="rg-detail-item"><span class="rg-detail-key">Bitis</span><span class="rg-detail-val">' + (ip.due_date || '—') + '</span></div>';
+        html += '<div class="rg-detail-item"><span class="rg-detail-key">Proje</span><span class="rg-detail-val">' + (proj ? proj.name : '—') + '</span></div>';
+        html += '<div class="rg-detail-item"><span class="rg-detail-key">Team Lead</span><span class="rg-detail-val">' + r.name + '</span></div>';
+        html += '</div>';
+        html += '</td></tr>';
       });
     }
 
-    html += '</div></div>';
-
-    // Lejant (sadece ilk ekip icin degil, her blokta)
+    html += '</tbody></table></div>';
     html += '</div>';
   });
 
-  // Renk lejanti
+  // Proje renk lejanti
   const usedProjs = projects.filter(function(p) {
     return isPaketleri.some(function(ip) {
       const ph = phases.find(function(x){return x.id===ip.phase_id;});
-      return ph && ph.project_id === p.id;
+      return ph && ph.project_id === p.id && (teamFilter === 'all' || isPaketleri.find(function(i2){return i2.id===ip.id && i2.owner === teamFilter;}));
     });
   });
 
   if (usedProjs.length) {
-    html += '<div class="card" style="margin-top:4px;padding:12px 16px">';
-    html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">';
+    html += '<div class="rg-legend">';
     usedProjs.forEach(function(p) {
-      html += '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:3px;background:' + (projColorMap[p.id]||'#7F77DD') + '"></div><span style="font-size:11px;color:var(--text2)">' + p.name + '</span></div>';
+      html += '<div class="rg-legend-item"><div class="rg-legend-dot" style="background:' + (projColorMap[p.id]||'#7F77DD') + '"></div><span>' + p.name + '</span></div>';
     });
-    html += '<div style="display:flex;align-items:center;gap:6px"><div style="width:2px;height:14px;background:#D94F7A;border-radius:1px"></div><span style="font-size:11px;color:var(--text2)">Bugün</span></div>';
-    html += '</div></div>';
+    html += '<div class="rg-legend-item"><div class="rg-today-dot-legend"></div><span>Bugün</span></div>';
+    html += '</div>';
   }
 
   el.innerHTML = html || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">Gösterilecek ekip bulunamadı</div>';
+}
+
+function toggleIpDetail(id) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
 }
 
 // ── RİSKLER ──
