@@ -971,6 +971,7 @@ function renderResources() {
   );
 }
 
+
 function renderGantt(teamFilter, projectFilter) {
   const el = document.getElementById('resource-gantt');
   if (!el) return;
@@ -983,7 +984,7 @@ function renderGantt(teamFilter, projectFilter) {
   const minDate = new Date(year, 0, 1);
   const maxDate = new Date(year, 11, 31);
   const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
-  const TR_MONTHS = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const TR_MONTHS = ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ăğu','Eyl','Eki','Kas','Ara'];
   const months = Array.from({length:12}, function(_, i) {
     return {
       label: TR_MONTHS[i],
@@ -1015,21 +1016,10 @@ function renderGantt(teamFilter, projectFilter) {
 
   filtRes.forEach(function(r) {
     const pkgs = getPkgs(r.team);
-
     html += '<div class="rg-team-card">';
-
-    // Takim basligi
-    html += '<div class="rg-team-header">';
-    html += '<div class="rg-team-name">' + r.team + '</div>';
-    html += '<div class="rg-team-badge">' + pkgs.length + ' iş paketi</div>';
-    html += '</div>';
-
-    // Tablo
+    html += '<div class="rg-team-header"><div class="rg-team-name">' + r.team + '</div><div class="rg-team-badge">' + pkgs.length + ' iş paketi</div></div>';
     html += '<div class="rg-table-scroll"><table class="rg-table" cellspacing="0" cellpadding="0">';
-
-    // Ay basliklari
-    html += '<thead><tr>';
-    html += '<th class="rg-col-label">İş Paketi</th>';
+    html += '<thead><tr><th class="rg-col-label">İş Paketi</th>';
     months.forEach(function(m) {
       html += '<th class="rg-col-month' + (m.isCurrent ? ' rg-col-current' : '') + '" style="width:' + (m.days/totalDays*100).toFixed(3) + '%">' + m.label + '</th>';
     });
@@ -1042,7 +1032,6 @@ function renderGantt(teamFilter, projectFilter) {
         const ph = phases.find(function(x){return x.id===ip.phase_id;});
         const proj = ph ? projects.find(function(x){return x.id===ph.project_id;}) : null;
         const projColor = proj ? (projColorMap[proj.id] || '#E91E63') : '#E91E63';
-
         const s = new Date(ip.start_date);
         const e = new Date(ip.due_date);
         const sOff = Math.max(0, Math.ceil((s - minDate) / 86400000));
@@ -1052,42 +1041,28 @@ function renderGantt(teamFilter, projectFilter) {
         const isLate = ip.status !== 'done' && e < today;
         const isDone = ip.status === 'done';
         const barColor = isDone ? '#4CAF50' : isLate ? '#F44336' : projColor;
-        const statusLabel = isDone ? 'Tamamlandı' : isLate ? 'Gecikmiş' : 'Devam Ediyor';
-
+        const statusLabel = isDone ? 'Tamamlandı' : isLate ? 'Gecikmis' : 'Devam Ediyor';
         const tooltipText = ip.title + '|' + (ip.start_date||'—') + '|' + (ip.due_date||'—') + '|' + statusLabel + '|' + r.name;
 
         html += '<tr class="rg-row">';
-        html += '<td class="rg-cell-label">';
+        html += '<td class="rg-cell-label"><div style="display:flex;align-items:flex-start;gap:8px">';
         html += '<div class="rg-ip-dot" style="background:' + projColor + '"></div>';
-        html += '<div class="rg-ip-info">';
-        html += '<div class="rg-ip-title">' + ip.title + '</div>';
-        html += '<div class="rg-ip-proj">' + (proj ? proj.name : '—') + '</div>';
+        html += '<div class="rg-ip-info"><div class="rg-ip-title">' + ip.title + '</div><div class="rg-ip-proj">' + (proj ? proj.name : '—') + '</div></div>';
         html += '</div></td>';
-
-        html += '<td colspan="12" class="rg-cell-timeline">';
-        html += '<div class="rg-tl-inner">';
-
-        // Bugün cizgisi
+        html += '<td colspan="12" class="rg-cell-timeline"><div class="rg-tl-inner">';
         if (todayOff >= 0 && todayOff <= totalDays) {
           html += '<div class="rg-today-line" style="left:' + todayPct + '%"><div class="rg-today-dot"></div></div>';
         }
-
-        // Grid cizgileri
         months.forEach(function(m) {
           html += '<div class="rg-grid-line' + (m.isCurrent ? ' rg-grid-current' : '') + '" style="left:' + (m.offset/totalDays*100).toFixed(3) + '%"></div>';
         });
-
-        // Bar — tooltip data attribute olarak
-        html += '<div class="rg-bar" style="left:' + lp + '%;width:' + wp + '%;background:' + barColor + '" data-tip="' + tooltipText + '">';
-        html += '</div>';
-
+        html += '<div class="rg-bar" style="left:' + lp + '%;width:' + wp + '%;background:' + barColor + '" data-tip="' + tooltipText + '"></div>';
         html += '</div></td></tr>';
       });
     }
 
     html += '</tbody></table></div>';
 
-    // Proje lejanti
     const projsInTeam = [...new Set(pkgs.map(function(ip) {
       const ph = phases.find(function(x){return x.id===ip.phase_id;});
       return ph ? ph.project_id : null;
@@ -1102,25 +1077,18 @@ function renderGantt(teamFilter, projectFilter) {
       html += '<div class="rg-legend-item rg-legend-today"><span class="rg-legend-line"></span>Bugün</div>';
       html += '</div>';
     }
-
     html += '</div>';
   });
 
-  html += '</div>';
-
-  // Tooltip overlay
-  html += '<div id="rg-tooltip" class="rg-tooltip"></div>';
-
+  html += '</div><div id="rg-tooltip" class="rg-tooltip"></div>';
   el.innerHTML = html;
 
-  // Tooltip eventleri
   el.querySelectorAll('.rg-bar[data-tip]').forEach(function(bar) {
     bar.addEventListener('mouseenter', function(e) {
       const parts = bar.getAttribute('data-tip').split('|');
       const tip = document.getElementById('rg-tooltip');
       if (!tip) return;
-      tip.innerHTML =
-        '<div class="rg-tip-title">' + parts[0] + '</div>' +
+      tip.innerHTML = '<div class="rg-tip-title">' + parts[0] + '</div>' +
         '<div class="rg-tip-row"><span>Başlangıç</span><span>' + parts[1] + '</span></div>' +
         '<div class="rg-tip-row"><span>Bitiş</span><span>' + parts[2] + '</span></div>' +
         '<div class="rg-tip-row"><span>Durum</span><span class="rg-tip-status">' + parts[3] + '</span></div>' +
@@ -1130,175 +1098,14 @@ function renderGantt(teamFilter, projectFilter) {
     bar.addEventListener('mousemove', function(e) {
       const tip = document.getElementById('rg-tooltip');
       if (!tip) return;
-      const x = e.clientX + 14;
-      const y = e.clientY - 10;
-      const tw = tip.offsetWidth;
-      tip.style.left = (x + tw > window.innerWidth ? x - tw - 28 : x) + 'px';
-      tip.style.top = y + 'px';
+      tip.style.left = (e.clientX + 14) + 'px';
+      tip.style.top = (e.clientY - 10) + 'px';
     });
     bar.addEventListener('mouseleave', function() {
       const tip = document.getElementById('rg-tooltip');
       if (tip) tip.style.display = 'none';
     });
   });
-}
-
-function renderGantt(teamFilter, projectFilter) {
-  const el = document.getElementById('resource-gantt');
-  if (!el) return;
-
-  const PROJ_COLORS = ['#D94F7A','#4A90D9','#E8923A','#5BA85A','#9B59B6','#E74C3C','#1ABC9C','#F39C12'];
-  const projColorMap = {};
-  projects.forEach(function(p, i) { projColorMap[p.id] = PROJ_COLORS[i % PROJ_COLORS.length]; });
-
-  const year = new Date().getFullYear();
-  const minDate = new Date(year, 0, 1);
-  const maxDate = new Date(year, 11, 31);
-  const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
-  const TR_MONTHS = ['Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara'];
-  const months = Array.from({length:12}, function(_, i) {
-    return {
-      label: TR_MONTHS[i],
-      days: new Date(year, i+1, 0).getDate(),
-      offset: Math.ceil((new Date(year,i,1) - minDate) / 86400000)
-    };
-  });
-
-  let filtRes = resources.filter(function(r) { return r.team; });
-  if (teamFilter && teamFilter !== 'all') {
-    filtRes = filtRes.filter(function(r) { return r.team === teamFilter; });
-  }
-
-  const today = new Date(); today.setHours(0,0,0,0);
-  const todayOff = Math.ceil((today - minDate) / 86400000);
-  const todayPct = (todayOff / totalDays * 100).toFixed(3);
-
-  const getPkgs = function(team) {
-    return isPaketleri.filter(function(ip) {
-      if (ip.owner !== team || !ip.start_date || !ip.due_date) return false;
-      if (projectFilter && projectFilter !== 'all') {
-        const ph = phases.find(function(x){return x.id===ip.phase_id;});
-        if (!ph || ph.project_id !== projectFilter) return false;
-      }
-      return true;
-    });
-  };
-
-  const LW = 200;
-  let html = '';
-
-  filtRes.forEach(function(r) {
-    const pkgs = getPkgs(r.team);
-
-    html += '<div class="rg-block">';
-
-    // Blok baslik
-    html += '<div class="rg-block-header">';
-    html += '<div>';
-    html += '<div class="rg-block-title">' + r.team + '</div>';
-    html += '<div class="rg-block-sub">' + r.name + ' &middot; Team Lead &middot; ' + pkgs.length + ' is paketi</div>';
-    html += '</div>';
-    html += '</div>';
-
-    // Tablo
-    html += '<div class="rg-table-wrap"><table class="rg-table">';
-
-    // Baslik satiri
-    html += '<thead><tr>';
-    html += '<th class="rg-th-label">TOPIC</th>';
-    months.forEach(function(m) {
-      html += '<th class="rg-th-month" style="width:' + (m.days/totalDays*100).toFixed(3) + '%">' + m.label + '</th>';
-    });
-    html += '</tr></thead>';
-
-    // Icerik
-    html += '<tbody>';
-
-    if (!pkgs.length) {
-      html += '<tr><td colspan="13" class="rg-empty">Bu ekibe atanmis is paketi yok</td></tr>';
-    } else {
-      pkgs.forEach(function(ip) {
-        const ph = phases.find(function(x){return x.id===ip.phase_id;});
-        const proj = ph ? projects.find(function(x){return x.id===ph.project_id;}) : null;
-        const projColor = proj ? (projColorMap[proj.id] || '#7F77DD') : '#7F77DD';
-
-        const s = new Date(ip.start_date);
-        const e = new Date(ip.due_date);
-        const sOff = Math.max(0, Math.ceil((s - minDate) / 86400000));
-        const eOff = Math.min(totalDays, Math.ceil((e - minDate) / 86400000));
-        const lp = (sOff / totalDays * 100).toFixed(3);
-        const wp = Math.max(0.5, ((eOff - sOff) / totalDays * 100)).toFixed(3);
-        const isLate = ip.status !== 'done' && e < today;
-        const isDone = ip.status === 'done';
-        const barColor = isDone ? '#5BA85A' : isLate ? '#E74C3C' : projColor;
-        const uid = 'ip-detail-' + ip.id;
-
-        html += '<tr class="rg-row" onclick="toggleIpDetail(\'' + uid + '\')">';
-
-        // Etiket sutunu
-        html += '<td class="rg-td-label">';
-        html += '<div class="rg-topic-name">' + ip.title + '</div>';
-        html += '<div class="rg-topic-sub">' + (proj ? proj.name : '') + (r.name ? ' &middot; ' + r.name : '') + '</div>';
-        html += '</td>';
-
-        // Timeline sutunu (colspan 12, pozisyonlama icin relative div)
-        html += '<td colspan="12" class="rg-td-timeline">';
-        html += '<div class="rg-timeline-inner" style="position:relative;height:36px">';
-
-        // Bugün cizgisi
-        if (todayOff >= 0 && todayOff <= totalDays) {
-          html += '<div class="rg-today-line" style="left:' + todayPct + '%"></div>';
-        }
-
-        // Ay cizgileri
-        months.forEach(function(m) {
-          html += '<div class="rg-grid-line" style="left:' + (m.offset/totalDays*100).toFixed(3) + '%"></div>';
-        });
-
-        // Bar
-        html += '<div class="rg-bar" style="left:' + lp + '%;width:' + wp + '%;background:' + barColor + '">';
-        html += '<span class="rg-bar-label">' + ip.title + '</span>';
-        html += '</div>';
-
-        html += '</div></td>';
-        html += '</tr>';
-
-        // Detay satiri (gizli, tiklayinca acilir)
-        html += '<tr class="rg-detail-row" id="' + uid + '" style="display:none">';
-        html += '<td colspan="13" class="rg-detail-cell">';
-        html += '<div class="rg-detail-content">';
-        html += '<div class="rg-detail-item"><span class="rg-detail-key">Durum</span><span class="rg-detail-val">' + (isDone ? 'Tamamlandi' : isLate ? 'Gecikmis' : 'Devam Ediyor') + '</span></div>';
-        html += '<div class="rg-detail-item"><span class="rg-detail-key">Baslangic</span><span class="rg-detail-val">' + (ip.start_date || '—') + '</span></div>';
-        html += '<div class="rg-detail-item"><span class="rg-detail-key">Bitis</span><span class="rg-detail-val">' + (ip.due_date || '—') + '</span></div>';
-        html += '<div class="rg-detail-item"><span class="rg-detail-key">Proje</span><span class="rg-detail-val">' + (proj ? proj.name : '—') + '</span></div>';
-        html += '<div class="rg-detail-item"><span class="rg-detail-key">Team Lead</span><span class="rg-detail-val">' + r.name + '</span></div>';
-        html += '</div>';
-        html += '</td></tr>';
-      });
-    }
-
-    html += '</tbody></table></div>';
-    html += '</div>';
-  });
-
-  // Proje renk lejanti
-  const usedProjs = projects.filter(function(p) {
-    return isPaketleri.some(function(ip) {
-      const ph = phases.find(function(x){return x.id===ip.phase_id;});
-      return ph && ph.project_id === p.id && (teamFilter === 'all' || isPaketleri.find(function(i2){return i2.id===ip.id && i2.owner === teamFilter;}));
-    });
-  });
-
-  if (usedProjs.length) {
-    html += '<div class="rg-legend">';
-    usedProjs.forEach(function(p) {
-      html += '<div class="rg-legend-item"><div class="rg-legend-dot" style="background:' + (projColorMap[p.id]||'#7F77DD') + '"></div><span>' + p.name + '</span></div>';
-    });
-    html += '<div class="rg-legend-item"><div class="rg-today-dot-legend"></div><span>Bugün</span></div>';
-    html += '</div>';
-  }
-
-  el.innerHTML = html || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">Gösterilecek ekip bulunamadı</div>';
 }
 
 function toggleIpDetail(id) {
