@@ -1381,4 +1381,118 @@ async function saveWorkshopNote(id) {
     toast('Kayıt başarısız', 'error');
   }
 }
+function renderGantt(teamFilter, projectFilter) {
+  const el = document.getElementById('resource-gantt');
+  if (!el) return;
 
+  const allDates = isPaketleri
+    .filter(ip => ip.start_date && ip.due_date)
+    .flatMap(ip => [new Date(ip.start_date), new Date(ip.due_date)]);
+
+  if (!allDates.length) {
+    el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Tarihi olan iş paketi bulunamadı</div>';
+    return;
+  }
+
+  const minDate = new Date(Math.min(...allDates));
+  const maxDate = new Date(Math.max(...allDates));
+  minDate.setDate(1);
+  maxDate.setMonth(maxDate.getMonth() + 1);
+  maxDate.setDate(1);
+  const totalDays = Math.ceil((maxDate - minDate) / 86400000);
+
+  const months = [];
+  const cursor = new Date(minDate);
+  while (cursor < maxDate) {
+    months.push({
+      label: cursor.toLocaleDateString('tr-TR', { month: 'short', year: 'numeric' }),
+      days: new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate(),
+      offset: Math.ceil((cursor - minDate) / 86400000)
+    });
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  let filteredResources = resources.filter(r => r.team);
+  if (teamFilter && teamFilter !== 'all') {
+    filteredResources = filteredResources.filter(r => r.team === teamFilter);
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayOffset = Math.ceil((today - minDate) / 86400000);
+  const todayPct = (todayOffset / totalDays * 100).toFixed(2);
+  const LABEL_W = 160;
+
+  const getPackages = (team) => isPaketleri.filter(ip => {
+    if (ip.owner !== team) return false;
+    if (!ip.start_date || !ip.due_date) return false;
+    if (projectFilter && projectFilter !== 'all') {
+      const ph = phases.find(x => x.id === ip.phase_id);
+      if (!ph || ph.project_id !== projectFilter) return false;
+    }
+    return true;
+  });
+
+  let html = '<div style="min-width:700px;font-size:12px">';
+
+  html += '<div style="display:flex;margin-left:' + LABEL_W + 'px;border-bottom:1px solid var(--border)">';
+  months.forEach(function(m) {
+    html += '<div style="flex:' + m.days + ';text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:6px 0;border-right:1px solid var(--border)">' + m.label + '</div>';
+  });
+  html += '</div>';
+
+  filteredResources.forEach(function(r) {
+    const packages = getPackages(r.team);
+    const rowH = Math.max(44, packages.length * 28 + 12);
+
+    html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:' + rowH + 'px">';
+    html += '<div style="width:' + LABEL_W + 'px;flex-shrink:0;padding:8px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center">';
+    html += '<div style="font-size:12px;font-weight:600;color:var(--text)">' + r.team + '</div>';
+    html += '<div style="font-size:10px;color:var(--text3)">' + r.name + '</div>';
+    html += '</div>';
+    html += '<div style="flex:1;position:relative;min-height:' + rowH + 'px">';
+
+    if (todayOffset >= 0 && todayOffset <= totalDays) {
+      html += '<div style="position:absolute;left:' + todayPct + '%;top:0;bottom:0;width:1px;background:var(--red);opacity:0.4;z-index:1"></div>';
+    }
+
+    months.forEach(function(m) {
+      const pct = (m.offset / totalDays * 100).toFixed(2);
+      html += '<div style="position:absolute;left:' + pct + '%;top:0;bottom:0;width:1px;background:var(--border)"></div>';
+    });
+
+    packages.forEach(function(ip, i) {
+      const start = new Date(ip.start_date);
+      const end = new Date(ip.due_date);
+      const startOffset = Math.ceil((start - minDate) / 86400000);
+      const duration = Math.max(1, Math.ceil((end - start) / 86400000) + 1);
+      const leftPct = (startOffset / totalDays * 100).toFixed(2);
+      const widthPct = (duration / totalDays * 100).toFixed(2);
+      const ph = phases.find(function(x) { return x.id === ip.phase_id; });
+      const proj = ph ? projects.find(function(x) { return x.id === ph.project_id; }) : null;
+      const isLate = ip.status !== 'done' && new Date(ip.due_date) < today;
+      const isDone = ip.status === 'done';
+      const barColor = isDone ? 'var(--green)' : isLate ? 'var(--red)' : 'var(--purple)';
+      const top = 6 + i * 28;
+      const label = ip.title + (proj ? ' · ' + proj.name : '');
+
+      html += '<div title="' + label + '" style="position:absolute;left:' + leftPct + '%;width:' + widthPct + '%;top:' + top + 'px;height:20px;background:' + barColor + ';opacity:0.85;border-radius:4px;display:flex;align-items:center;padding:0 6px;box-sizing:border-box;overflow:hidden;z-index:2">';
+      html += '<span style="font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + label + '</span>';
+      html += '</div>';
+    });
+
+    if (!packages.length) {
+      html += '<div style="padding:10px 12px;font-size:11px;color:var(--text3)">Atanmış iş paketi yok</div>';
+    }
+
+    html += '</div></div>';
+  });
+
+  html += '<div style="display:flex;gap:16px;padding:10px 12px;border-top:1px solid var(--border)">';
+  html += '<div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--purple)"></div><span style="font-size:11px;color:var(--text3)">Devam ediyor</span></div>';
+  html += '<div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--green)"></div><span style="font-size:11px;color:var(--text3)">Tamamlandı</span></div>';
+  html += '<div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--red)"></div><span style="font-size:11px;color:var(--text3)">Gecikmiş</span></div>';
+  html += '</div></div>';
+
+  el.innerHTML = html;
+}
