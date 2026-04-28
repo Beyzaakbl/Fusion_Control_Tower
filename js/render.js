@@ -956,89 +956,153 @@ function renderResources() {
     projects.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; projectSelect.appendChild(o); });
   }
 
-  const el = document.getElementById('resource-list');
-  if (el) {
-    let filteredRes = teamFilter !== 'all' ? resources.filter(r => r.team === teamFilter) : resources;
-    if (!filteredRes.length) {
-      el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Ekip bulunamadı</div>';
-    } else {
-      el.innerHTML = filteredRes.map(r => {
-        const h=r.load>85, m=r.load>65;
-        const c=h?'var(--red)':m?'var(--amber)':'var(--green)';
-        const bg=h?'var(--red-bg)':m?'var(--amber-bg)':'var(--green-bg)';
-        const ini=r.name.replace('.',' ').split(' ').map(w=>w[0]).join('');
-        return '<div class="res-row">'
-          + '<div class="avatar" style="background:' + bg + ';color:' + c + '">' + ini + '</div>'
-          + '<div style="min-width:200px"><div style="font-size:12px;font-weight:500">' + (r.team||r.name) + '</div>'
-          + '<div style="font-size:10px;color:var(--text3)">' + r.name + ' · ' + r.role + '</div></div>'
-          + '<div class="cap-track"><div class="cap-fill" style="width:' + r.load + '%;background:' + c + '"></div></div>'
-          + '<div style="min-width:36px;text-align:right;font-size:12px;font-weight:600;color:' + c + '">' + r.load + '%</div>'
-          + '</div>';
-      }).join('');
-    }
-  }
   renderGantt(teamFilter, projectFilter);
 }
 
 function renderGantt(teamFilter, projectFilter) {
   const el = document.getElementById('resource-gantt');
   if (!el) return;
-  const allDates = isPaketleri.filter(ip => ip.start_date && ip.due_date).flatMap(ip => [new Date(ip.start_date), new Date(ip.due_date)]);
-  if (!allDates.length) { el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3)">Tarihi olan is paketi bulunamadi</div>'; return; }
-  const minDate = new Date(Math.min(...allDates));
-  const maxDate = new Date(Math.max(...allDates));
-  minDate.setDate(1); maxDate.setMonth(maxDate.getMonth()+1); maxDate.setDate(1);
-  const totalDays = Math.ceil((maxDate - minDate) / 86400000);
-  const months = [];
-  const cursor = new Date(minDate);
-  while (cursor < maxDate) {
-    months.push({ label: cursor.toLocaleDateString('tr-TR', {month:'short',year:'numeric'}), days: new Date(cursor.getFullYear(), cursor.getMonth()+1, 0).getDate(), offset: Math.ceil((cursor - minDate) / 86400000) });
-    cursor.setMonth(cursor.getMonth()+1);
-  }
-  let filtRes = resources.filter(r => r.team);
-  if (teamFilter && teamFilter !== 'all') filtRes = filtRes.filter(r => r.team === teamFilter);
+
+  // Proje renk paleti
+  const PROJ_COLORS = ['#D94F7A','#4A90D9','#E8923A','#5BA85A','#9B59B6','#E74C3C','#1ABC9C','#F39C12'];
+  const projColorMap = {};
+  projects.forEach(function(p, i) { projColorMap[p.id] = PROJ_COLORS[i % PROJ_COLORS.length]; });
+
+  // Sabit 12 ay: Ocak - Aralik
+  const year = new Date().getFullYear();
+  const minDate = new Date(year, 0, 1);
+  const maxDate = new Date(year, 11, 31);
+  const totalDays = Math.ceil((maxDate - minDate) / 86400000) + 1;
+  const TR_MONTHS = ['OCA','SUB','MAR','NIS','MAY','HAZ','TEM','AGU','EYL','EKI','KAS','ARA'];
+  const months = Array.from({length:12}, function(_, i) {
+    return {
+      label: TR_MONTHS[i],
+      days: new Date(year, i+1, 0).getDate(),
+      offset: Math.ceil((new Date(year,i,1) - minDate) / 86400000)
+    };
+  });
+
+  // Filtrele
+  let filtRes = resources.filter(function(r) { return r.team; });
+  if (teamFilter && teamFilter !== 'all') filtRes = filtRes.filter(function(r) { return r.team === teamFilter; });
+
   const today = new Date(); today.setHours(0,0,0,0);
   const todayOff = Math.ceil((today - minDate) / 86400000);
   const todayPct = (todayOff / totalDays * 100).toFixed(2);
-  const LW = 160;
+
   const getPkgs = function(team) {
     return isPaketleri.filter(function(ip) {
       if (ip.owner !== team || !ip.start_date || !ip.due_date) return false;
-      if (projectFilter && projectFilter !== 'all') { const ph = phases.find(function(x){return x.id===ip.phase_id;}); if (!ph || ph.project_id !== projectFilter) return false; }
+      if (projectFilter && projectFilter !== 'all') {
+        const ph = phases.find(function(x){return x.id===ip.phase_id;});
+        if (!ph || ph.project_id !== projectFilter) return false;
+      }
       return true;
     });
   };
-  let html = '<div style="min-width:700px;font-size:12px">';
-  html += '<div style="display:flex;margin-left:' + LW + 'px;border-bottom:1px solid var(--border)">';
-  months.forEach(function(m) { html += '<div style="flex:' + m.days + ';text-align:center;font-size:11px;font-weight:600;color:var(--text2);padding:6px 0;border-right:1px solid var(--border)">' + m.label + '</div>'; });
-  html += '</div>';
+
+  const LABEL_W = 200;
+  let html = '';
+
   filtRes.forEach(function(r) {
     const pkgs = getPkgs(r.team);
-    const rowH = Math.max(44, pkgs.length * 28 + 12);
-    html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:' + rowH + 'px">';
-    html += '<div style="width:' + LW + 'px;flex-shrink:0;padding:8px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center"><div style="font-size:12px;font-weight:600;color:var(--text)">' + r.team + '</div><div style="font-size:10px;color:var(--text3)">' + r.name + '</div></div>';
-    html += '<div style="flex:1;position:relative;min-height:' + rowH + 'px">';
-    if (todayOff >= 0 && todayOff <= totalDays) html += '<div style="position:absolute;left:' + todayPct + '%;top:0;bottom:0;width:1px;background:var(--red);opacity:0.4;z-index:1"></div>';
-    months.forEach(function(m) { html += '<div style="position:absolute;left:' + (m.offset/totalDays*100).toFixed(2) + '%;top:0;bottom:0;width:1px;background:var(--border)"></div>'; });
-    pkgs.forEach(function(ip, i) {
-      const s = new Date(ip.start_date), e = new Date(ip.due_date);
-      const sOff = Math.ceil((s - minDate) / 86400000);
-      const dur = Math.max(1, Math.ceil((e - s) / 86400000) + 1);
-      const lp = (sOff / totalDays * 100).toFixed(2);
-      const wp = (dur / totalDays * 100).toFixed(2);
-      const ph = phases.find(function(x){return x.id===ip.phase_id;});
-      const proj = ph ? projects.find(function(x){return x.id===ph.project_id;}) : null;
-      const isLate = ip.status !== 'done' && new Date(ip.due_date) < today;
-      const isDone = ip.status === 'done';
-      const bc = isDone ? 'var(--green)' : isLate ? 'var(--red)' : 'var(--purple)';
-      const lbl = ip.title + (proj ? ' · ' + proj.name : '');
-      html += '<div title="' + lbl + '" style="position:absolute;left:' + lp + '%;width:' + wp + '%;top:' + (6+i*28) + 'px;height:20px;background:' + bc + ';opacity:0.85;border-radius:4px;display:flex;align-items:center;padding:0 6px;box-sizing:border-box;overflow:hidden;z-index:2"><span style="font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + lbl + '</span></div>';
+
+    html += '<div class="card" style="margin-bottom:12px;overflow:hidden">';
+
+    // Kart baslik
+    html += '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">';
+    html += '<div><div style="font-size:13px;font-weight:600;color:var(--text)">' + r.team + '</div>';
+    html += '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + r.name + ' &middot; Team Lead</div></div>';
+    html += '<div style="font-size:11px;color:var(--text3)">' + pkgs.length + ' is paketi</div>';
+    html += '</div>';
+
+    // Gantt icerigi
+    html += '<div style="overflow-x:auto"><div style="min-width:700px">';
+
+    // Ay baslik satiri
+    html += '<div style="display:flex;border-bottom:1px solid var(--border)">';
+    html += '<div style="width:' + LABEL_W + 'px;flex-shrink:0;padding:6px 12px;border-right:1px solid var(--border)"></div>';
+    html += '<div style="flex:1;display:flex">';
+    months.forEach(function(m) {
+      html += '<div style="flex:' + m.days + ';text-align:center;font-size:10px;font-weight:600;color:var(--text2);padding:5px 0;border-right:1px solid var(--border)">' + m.label + '</div>';
     });
-    if (!pkgs.length) html += '<div style="padding:10px 12px;font-size:11px;color:var(--text3)">Atanmis is paketi yok</div>';
     html += '</div></div>';
+
+    if (!pkgs.length) {
+      html += '<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">Bu ekibe atanmis is paketi yok</div>';
+    } else {
+      pkgs.forEach(function(ip) {
+        const ph = phases.find(function(x){return x.id===ip.phase_id;});
+        const proj = ph ? projects.find(function(x){return x.id===ph.project_id;}) : null;
+        const projColor = proj ? (projColorMap[proj.id] || '#7F77DD') : '#7F77DD';
+
+        const s = new Date(ip.start_date);
+        const e = new Date(ip.due_date);
+        const sOff = Math.max(0, Math.ceil((s - minDate) / 86400000));
+        const eOff = Math.min(totalDays, Math.ceil((e - minDate) / 86400000));
+        const lp = (sOff / totalDays * 100).toFixed(2);
+        const wp = Math.max(0.5, ((eOff - sOff) / totalDays * 100)).toFixed(2);
+
+        const isLate = ip.status !== 'done' && e < today;
+        const isDone = ip.status === 'done';
+        const barColor = isDone ? '#5BA85A' : isLate ? '#E74C3C' : projColor;
+
+        html += '<div style="display:flex;border-bottom:1px solid var(--border);min-height:36px">';
+
+        // Satir etiketi
+        html += '<div style="width:' + LABEL_W + 'px;flex-shrink:0;padding:6px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center">';
+        html += '<div style="font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ip.title + '</div>';
+        html += '<div style="font-size:10px;color:var(--text3);margin-top:1px">' + (proj ? proj.name : '') + '</div>';
+        html += '</div>';
+
+        // Bar alani
+        html += '<div style="flex:1;position:relative;min-height:36px">';
+
+        // Bugün cizgisi
+        if (todayOff >= 0 && todayOff <= totalDays) {
+          html += '<div style="position:absolute;left:' + todayPct + '%;top:0;bottom:0;width:2px;background:#D94F7A;opacity:0.7;z-index:3"></div>';
+        }
+
+        // Ay grid cizgileri
+        months.forEach(function(m) {
+          const pct = (m.offset / totalDays * 100).toFixed(2);
+          html += '<div style="position:absolute;left:' + pct + '%;top:0;bottom:0;width:1px;background:var(--border);opacity:0.6"></div>';
+        });
+
+        // Bar
+        html += '<div style="position:absolute;left:' + lp + '%;width:' + wp + '%;top:8px;height:20px;background:' + barColor + ';border-radius:4px;display:flex;align-items:center;padding:0 6px;box-sizing:border-box;overflow:hidden;z-index:2" title="' + ip.title + '">';
+        html += '<span style="font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + ip.title + '</span>';
+        html += '</div>';
+
+        html += '</div></div>';
+      });
+    }
+
+    html += '</div></div>';
+
+    // Lejant (sadece ilk ekip icin degil, her blokta)
+    html += '</div>';
   });
-  html += '<div style="display:flex;gap:16px;padding:10px 12px;border-top:1px solid var(--border)"><div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--purple)"></div><span style="font-size:11px;color:var(--text3)">Devam ediyor</span></div><div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--green)"></div><span style="font-size:11px;color:var(--text3)">Tamamlandi</span></div><div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:var(--red)"></div><span style="font-size:11px;color:var(--text3)">Gecikmis</span></div></div></div>';
-  el.innerHTML = html;
+
+  // Renk lejanti
+  const usedProjs = projects.filter(function(p) {
+    return isPaketleri.some(function(ip) {
+      const ph = phases.find(function(x){return x.id===ip.phase_id;});
+      return ph && ph.project_id === p.id;
+    });
+  });
+
+  if (usedProjs.length) {
+    html += '<div class="card" style="margin-top:4px;padding:12px 16px">';
+    html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">';
+    usedProjs.forEach(function(p) {
+      html += '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:3px;background:' + (projColorMap[p.id]||'#7F77DD') + '"></div><span style="font-size:11px;color:var(--text2)">' + p.name + '</span></div>';
+    });
+    html += '<div style="display:flex;align-items:center;gap:6px"><div style="width:2px;height:14px;background:#D94F7A;border-radius:1px"></div><span style="font-size:11px;color:var(--text2)">Bugün</span></div>';
+    html += '</div></div>';
+  }
+
+  el.innerHTML = html || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">Gösterilecek ekip bulunamadı</div>';
 }
 
 // ── RİSKLER ──
